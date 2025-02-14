@@ -7,6 +7,7 @@ import 'package:findmate1/tabs/matching_screen.dart';
 import 'package:findmate1/tabs/info.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart'; // Firebase 설정 파일
+import 'login/logout.dart';
 
 
 class MainScreen extends StatefulWidget {
@@ -34,7 +35,15 @@ class _MainScreenState extends State<MainScreen> {  // ✅ State 클래스명 �
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("FindMate")), // ✅ 앱바 추가
+      appBar: AppBar(
+          title: const Text("FindMate"),
+        actions: [
+          ElevatedButton(
+            onPressed: () => signOut(context), // ✅ 로그아웃 함수 실행
+            child: const Text('로그아웃'),
+          ),
+        ],
+      ), // ✅ 앱바 추가
       body: Center(
           child: _screens[_selectedIndex]
       ),
