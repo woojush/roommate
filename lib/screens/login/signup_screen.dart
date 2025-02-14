@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
-import 'package:findmate1/widget/TextField&Button.dart';
+import 'package:findmate1/widget/textFieldAndButton.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -58,6 +58,7 @@ class _SignupScreenState extends State<SignupScreen> {
   /// 인증번호 요청
   Future<void> _sendOtp() async {
     setState(() => _isLoading = true);
+    onPressed: _isLoading ? null : _sendOtp;
     try {
       await _checkPhoneNumberExists();
       await _auth.verifyPhoneNumber(
@@ -100,28 +101,41 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   /// 회원가입 완료
+  /// 회원가입 완료
   Future<void> _signup() async {
     if (!_validateInputs()) return;
     setState(() => _isLoading = true);
 
     try {
-      final user = _auth.currentUser;
-      if (user != null) {
-        await _firestore.collection('users').doc(user.uid).set({
-          'phone': _phoneController.text,
-          'birth': _birthController.text,
-          'id': _idController.text,
-          'password': _passwordController.text,
-          'email': _emailController.text,
-          'name': _nameController.text,
-        });
-      }
+      // 1️⃣ Firebase Authentication에서 회원 생성
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+
+      // 2️⃣ 생성된 UID 가져오기
+      String uid = userCredential.user!.uid;
+
+      // 3️⃣ Firestore에 사용자 정보 저장 (문서 ID를 UID로 설정)
+      await _firestore.collection('users').doc(uid).set({
+        'uid': uid,  // UID 필드 추가 (문서 ID와 동일)
+        'name': _nameController.text,
+        'email': _emailController.text,
+        'id': _idController.text,
+        'phone': _phoneController.text,  // "+82" 없이 저장
+        'birth': _birthController.text,  // "2005-11-21" 형식 유지
+        'createdAt': FieldValue.serverTimestamp(), // 가입 시간 자동 저장
+      });
+
+      // 4️⃣ 회원가입 성공 후 로그인 화면으로 이동
       Navigator.pop(context);
     } catch (e) {
-      _showError(e.toString());
+      _showError("회원가입 실패: ${e.toString()}");
     }
+
     setState(() => _isLoading = false);
   }
+
 
   /// 입력값 검증
   bool _validateInputs() {
@@ -129,14 +143,14 @@ class _SignupScreenState extends State<SignupScreen> {
       _showError("전화번호를 입력하세요.");
       return false;
     }
-    if (!_isOtpSent) {
-      _showError("인증번호를 요청하세요.");
-      return false;
-    }
-    if (_verificationId == null) {
-      _showError("전화번호 인증을 완료하세요.");
-      return false;
-    }
+    // if (!_isOtpSent) {
+    //   _showError("인증번호를 요청하세요.");
+    //   return false;
+    // }
+    // if (_verificationId == null) {
+    //   _showError("전화번호 인증을 완료하세요.");
+    //   return false;
+    // }
     if (_birthController.text.isEmpty) {
       _showError("생년월일을 입력하세요.");
       return false;
@@ -179,8 +193,15 @@ class _SignupScreenState extends State<SignupScreen> {
           children: [
             CustomInputButton(
               controller: _phoneController,
-              labelText: "전화번호 (010-0000-0000)",
-              onPressed: _isLoading ? null : _sendOtp,
+              labelText: "전화번호 (01000000000)",
+              //onPressed: _isLoading ? null : _sendOtp,
+              onPressed: _isLoading
+                  ? null
+                  : () {
+                print("입력된 전화번호: ${_phoneController.text}");
+                print("변환된 전화번호: +82${_phoneController.text.substring(1)}");
+                _sendOtp();
+              },
               buttonText: "인증 요청",
               inputFormatters: [
                 FilteringTextInputFormatter.deny(RegExp(r"\s")),

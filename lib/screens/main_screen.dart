@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'login/login_screen.dart';
-import 'package:findmate1/tabs/chat_screen.dart';
-import 'package:findmate1/tabs/community_screen.dart';
-import 'package:findmate1/tabs/home_screen.dart';
-import 'package:findmate1/tabs/matching_screen.dart';
-import 'package:findmate1/tabs/info.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'login/login_screen.dart'; // 로그인 창 파일
+import 'package:findmate1/tabs/chat_screen.dart'; // 채팅창 탭 파일
+import 'package:findmate1/tabs/community_screen.dart'; // 커뮤니티 탭 파일
+import 'package:findmate1/tabs/home_screen.dart'; // 메인 화면 파일
+import 'package:findmate1/tabs/matching_screen.dart'; // 매칭 탭 파일
+import 'package:findmate1/tabs/info.dart'; // 기숙사 정보 탭 관련 파일
+import 'package:firebase_core/firebase_core.dart'; //
 import 'firebase_options.dart'; // Firebase 설정 파일
+import 'package:findmate1/screens/settings/settings_main.dart';  // 로그아웃 기능 파일
+import 'settings/settings_main.dart'; // 설정 관련 파일
 
 
 class MainScreen extends StatefulWidget {
@@ -34,7 +36,15 @@ class _MainScreenState extends State<MainScreen> {  // ✅ State 클래스명 �
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("FindMate")), // ✅ 앱바 추가
+      appBar: AppBar(
+          title: const Text("FindMate"),
+        actions: [
+          IconButton(icon: Icon(Icons.settings), onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SettingsScreen()), // ✅ 변경
+          ),)
+        ],
+      ), // ✅ 앱바 추가
       body: Center(
           child: _screens[_selectedIndex]
       ),
