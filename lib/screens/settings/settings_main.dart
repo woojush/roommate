@@ -6,6 +6,7 @@ import 'package:findmate1/screens/settings/app_settings/app_settings.dart';
 import 'package:findmate1/screens/settings/help_center/help_center.dart';
 import 'package:findmate1/screens/settings/etc_settings/etc_settings.dart';
 import 'package:findmate1/screens/login/logout.dart';
+import 'package:findmate1/widgets/design.dart';  // design.dart 파일 import
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});

@@ -5,25 +5,21 @@ import 'package:findmate1/tabs/community_screen.dart'; // 커뮤니티 탭 파�
 import 'package:findmate1/tabs/home_screen.dart'; // 메인 화면 파일
 import 'package:findmate1/tabs/matching_screen.dart'; // 매칭 탭 파일
 import 'package:findmate1/tabs/info.dart'; // 기숙사 정보 탭 관련 파일
-import 'package:firebase_core/firebase_core.dart'; //
+import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart'; // Firebase 설정 파일
-import 'package:findmate1/screens/settings/settings_main.dart';  // 로그아웃 기능 파일
-import 'settings/settings_main.dart'; // 설정 관련 파일
-
+import 'package:findmate1/screens/settings/settings_main.dart';  // 설정 관련 파일
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
   @override
-  State<MainScreen> createState() => _MainScreenState(); // ✅ 수정
+  State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {  // ✅ State 클래스명 수정
-
+class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens =
-  [
+  final List<Widget> _screens = [
     Home(), Matching(), Community(), Chating(), Info()
   ];
 
@@ -36,18 +32,7 @@ class _MainScreenState extends State<MainScreen> {  // ✅ State 클래스명 �
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-          title: const Text("FindMate"),
-        actions: [
-          IconButton(icon: Icon(Icons.settings), onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const SettingsScreen()), // ✅ 변경
-          ),)
-        ],
-      ), // ✅ 앱바 추가
-      body: Center(
-          child: _screens[_selectedIndex]
-      ),
+      body: Center(child: _screens[_selectedIndex]),
       bottomNavigationBar: BottomNavigationBar(
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "홈"),
@@ -57,9 +42,10 @@ class _MainScreenState extends State<MainScreen> {  // ✅ State 클래스명 �
           BottomNavigationBarItem(icon: Icon(Icons.apartment), label: "기숙사"),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue, // ✅ 선택된 아이콘 색상 추가
-        unselectedItemColor: Colors.grey, // ✅ 선택되지 않은 아이콘 색상 추가
+        selectedItemColor: Colors.black, // 선택된 아이콘 색상 → 흰색
+        unselectedItemColor: Colors.grey, // 선택되지 않은 아이콘 색상 → 회색
         onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed, // ✅ 라벨이 항상 보이도록 설정
       ),
     );
   }

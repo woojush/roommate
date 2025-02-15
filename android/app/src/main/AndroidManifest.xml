@@ -14,7 +14,6 @@
         android:label="findmate1"
         android:icon="@mipmap/ic_launcher">
 
-
         <activity
             android:name="com.example.findmate1.MainActivity"
             android:exported="true"
