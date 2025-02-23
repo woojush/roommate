@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:findmate1/screens/settings/profile_edit/profile_edit.dart';
-import 'package:findmate1/screens/settings/account_settings/account_settings.dart';
-import 'package:findmate1/screens/settings/community_settings/community_settings.dart';
-import 'package:findmate1/screens/settings/app_settings/app_settings.dart';
-import 'package:findmate1/screens/settings/help_center/help_center.dart';
-import 'package:findmate1/screens/settings/etc_settings/etc_settings.dart';
-import 'package:findmate1/screens/login/logout.dart';
+import 'package:findmate1/ui/screens/settings/profile_edit/profile_edit.dart';
+import 'package:findmate1/ui/screens/settings/account_settings/account_settings.dart';
+import 'package:findmate1/ui/screens/settings/community_settings/community_settings.dart';
+import 'package:findmate1/ui/screens/settings/app_settings/app_settings.dart';
+import 'package:findmate1/ui/screens/settings/help_center/help_center.dart';
+import 'package:findmate1/ui/screens/settings/etc_settings/etc_settings.dart';
+import 'package:findmate1/ui/account/logout_screen.dart';
 import 'package:findmate1/widgets/design.dart';  // design.dart 파일 import
 
 class SettingsScreen extends StatelessWidget {

@@ -1,7 +1,7 @@
 // 앱의 메인 화면
 
 import 'package:flutter/material.dart';
-import 'package:findmate1/screens/settings/settings_main.dart';
+import 'package:findmate1/ui/screens/settings/settings_main.dart';  // 설정 관련 파일
 
 class Home extends StatelessWidget {
   Home({super.key});

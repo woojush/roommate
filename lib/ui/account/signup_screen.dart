@@ -1,17 +1,26 @@
+/// signup_screen.dart
+/// ---------------------------------------------------------------------------
+/// 이 파일은 사용자에게 회원가입 UI를 제공하는 화면입니다.
+/// - 전화번호, 인증번호, 이메일, 이름, 생년월일, 아이디, 비밀번호 등의 입력 필드를 포함합니다.
+/// - 각 입력값에 대한 중복 체크 및 인증번호 처리는 UI에서 수행하며,
+///   최종 회원가입 요청은 AccountService.signup()을 호출하여 백엔드에서 처리합니다.
+/// ---------------------------------------------------------------------------
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
-import 'package:findmate1/widget/textFieldAndButton.dart';
+import 'package:findmate1/widgets/textFieldAndButton.dart'; // CustomInputButton 등 커스텀 위젯 사용
+import 'package:findmate1/service/account/account_service.dart'; // 서비스 파일 import
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
-
   @override
   State<SignupScreen> createState() => _SignupScreenState();
 }
 
 class _SignupScreenState extends State<SignupScreen> {
+  // 각 입력 필드 컨트롤러
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _otpController = TextEditingController();
   final TextEditingController _birthController = TextEditingController();
@@ -30,7 +39,7 @@ class _SignupScreenState extends State<SignupScreen> {
   String _idCheckMessage = '';
   String _emailError = '';
 
-  /// 전화번호 중복 확인
+  /// 전화번호 중복 확인 (Firestore)
   Future<void> _checkPhoneNumberExists() async {
     final query = await _firestore
         .collection('users')
@@ -39,7 +48,7 @@ class _SignupScreenState extends State<SignupScreen> {
     if (query.docs.isNotEmpty) throw '이미 사용 중인 전화번호입니다.';
   }
 
-  /// 아이디 중복 확인
+  /// 아이디 중복 확인 (Firestore)
   Future<void> _checkIdExists() async {
     final query = await _firestore
         .collection('users')
@@ -55,15 +64,15 @@ class _SignupScreenState extends State<SignupScreen> {
     });
   }
 
-  /// 인증번호 요청
+  /// 인증번호 요청 (Firebase Phone Auth)
   Future<void> _sendOtp() async {
     setState(() => _isLoading = true);
-    onPressed: _isLoading ? null : _sendOtp;
     try {
       await _checkPhoneNumberExists();
       await _auth.verifyPhoneNumber(
         phoneNumber: "+82${_phoneController.text.substring(1)}",
         verificationCompleted: (PhoneAuthCredential credential) async {
+          // 자동 인증 완료 시 처리 (필요에 따라 수정)
           await _auth.signInWithCredential(credential);
         },
         verificationFailed: (FirebaseAuthException e) {
@@ -83,7 +92,7 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isLoading = false);
   }
 
-  /// 인증번호 확인
+  /// 인증번호 확인 (Firebase Phone Auth)
   Future<void> _verifyOtp() async {
     if (_verificationId == null || _otpController.text.isEmpty) {
       return _showError("인증번호를 입력하세요.");
@@ -100,34 +109,21 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  /// 회원가입 완료
-  /// 회원가입 완료
+  /// 회원가입 완료: 모든 입력값을 검증한 후, AccountService.signup() 호출
   Future<void> _signup() async {
     if (!_validateInputs()) return;
     setState(() => _isLoading = true);
 
     try {
-      // 1️⃣ Firebase Authentication에서 회원 생성
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: _emailController.text,
+      await AccountService.signup(
+        phone: _phoneController.text,
+        birth: _birthController.text,
+        id: _idController.text,
         password: _passwordController.text,
+        email: _emailController.text,
+        name: _nameController.text,
       );
-
-      // 2️⃣ 생성된 UID 가져오기
-      String uid = userCredential.user!.uid;
-
-      // 3️⃣ Firestore에 사용자 정보 저장 (문서 ID를 UID로 설정)
-      await _firestore.collection('users').doc(uid).set({
-        'uid': uid,  // UID 필드 추가 (문서 ID와 동일)
-        'name': _nameController.text,
-        'email': _emailController.text,
-        'id': _idController.text,
-        'phone': _phoneController.text,  // "+82" 없이 저장
-        'birth': _birthController.text,  // "2005-11-21" 형식 유지
-        'createdAt': FieldValue.serverTimestamp(), // 가입 시간 자동 저장
-      });
-
-      // 4️⃣ 회원가입 성공 후 로그인 화면으로 이동
+      // 회원가입 성공 시 이전 화면으로 돌아감
       Navigator.pop(context);
     } catch (e) {
       _showError("회원가입 실패: ${e.toString()}");
@@ -136,21 +132,12 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isLoading = false);
   }
 
-
   /// 입력값 검증
   bool _validateInputs() {
     if (_phoneController.text.isEmpty) {
       _showError("전화번호를 입력하세요.");
       return false;
     }
-    // if (!_isOtpSent) {
-    //   _showError("인증번호를 요청하세요.");
-    //   return false;
-    // }
-    // if (_verificationId == null) {
-    //   _showError("전화번호 인증을 완료하세요.");
-    //   return false;
-    // }
     if (_birthController.text.isEmpty) {
       _showError("생년월일을 입력하세요.");
       return false;
@@ -167,9 +154,8 @@ class _SignupScreenState extends State<SignupScreen> {
       _showError("비밀번호를 입력하세요.");
       return false;
     }
-    return true; // 모든 검증 통과 시 true 반환
+    return true;
   }
-
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -191,15 +177,11 @@ class _SignupScreenState extends State<SignupScreen> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
+            // CustomInputButton은 커스텀 위젯으로, 입력 필드와 버튼을 동시에 제공
             CustomInputButton(
               controller: _phoneController,
               labelText: "전화번호 (01000000000)",
-              //onPressed: _isLoading ? null : _sendOtp,
-              onPressed: _isLoading
-                  ? null
-                  : () {
-                print("입력된 전화번호: ${_phoneController.text}");
-                print("변환된 전화번호: +82${_phoneController.text.substring(1)}");
+              onPressed: _isLoading ? null : () {
                 _sendOtp();
               },
               buttonText: "인증 요청",
@@ -247,14 +229,27 @@ class _SignupScreenState extends State<SignupScreen> {
                 _idCheckMessage,
                 style: TextStyle(color: _idCheckMessage.contains("가능") ? Colors.green : Colors.red),
               ),
-            TextField(
-              controller: _passwordController,
-              decoration: InputDecoration(labelText: '비밀번호'),
-            ),
+            TextField(controller: _passwordController, decoration: InputDecoration(labelText: '비밀번호')),
             TextButton(onPressed: _isLoading ? null : _signup, child: const Text('회원가입 완료'))
           ],
         ),
       ),
     );
+  }
+
+  /// 아이디 중복 체크 함수 (Firestore 조회)
+  Future<void> _checkIdExists() async {
+    final query = await _firestore
+        .collection('users')
+        .where('id', isEqualTo: _idController.text)
+        .get();
+    setState(() {
+      if (query.docs.isNotEmpty) {
+        _idCheckMessage = '이미 존재하는 아이디입니다.';
+      } else {
+        _idCheckMessage = '사용 가능한 아이디입니다!';
+        _isIdChecked = true;
+      }
+    });
   }
 }

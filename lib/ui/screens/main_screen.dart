@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'login/login_screen.dart'; // 로그인 창 파일
-import 'package:findmate1/tabs/chat_screen.dart'; // 채팅창 탭 파일
-import 'package:findmate1/tabs/community_screen.dart'; // 커뮤니티 탭 파일
-import 'package:findmate1/tabs/home_screen.dart'; // 메인 화면 파일
-import 'package:findmate1/tabs/matching_screen.dart'; // 매칭 탭 파일
-import 'package:findmate1/tabs/info.dart'; // 기숙사 정보 탭 관련 파일
+import 'package:findmate1/ui/account/login_screen.dart'; // 로그인 창 파일
+import 'package:findmate1/ui/tabs/chat_screen.dart'; // 채팅창 탭 파일
+import 'package:findmate1/service/tabs/community/post.dart';
+import 'package:findmate1/ui/tabs/home_screen.dart'; // 메인 화면 파일
+import 'package:findmate1/ui/tabs/matching/router/checklist_router.dart'; // 매칭 탭 파일
+import 'package:findmate1/ui/tabs/info.dart'; // 기숙사 정보 탭 관련 파일
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; // Firebase 설정 파일
-import 'package:findmate1/screens/settings/settings_main.dart';  // 설정 관련 파일
+import 'package:findmate1/config/firebase_options.dart'; // Firebase 설정 파일
+import 'package:findmate1/ui/screens/settings/settings_main.dart';  // 설정 관련 파일
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -20,7 +20,7 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
-    Home(), Matching(), Community(), Chating(), Info()
+    Home(), Matching(), CommunityTab(), Chating(), Info()
   ];
 
   void _onItemTapped(int index) {
