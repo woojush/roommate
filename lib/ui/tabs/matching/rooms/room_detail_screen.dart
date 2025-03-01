@@ -6,7 +6,7 @@
 /// ---------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
-import '../../room/service/room_service.dart';
+import 'package:findmate1/service/tabs/matching/room_service.dart';
 import 'profile_screen.dart';
 
 class RoomDetailScreen extends StatefulWidget {
@@ -29,7 +29,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
   }
 
   Future<void> _loadRoom() async {
-    roomData = await RoomService.fetchRoom(widget.roomId);
+    roomData = (await RoomService.fetchRoom(widget.roomId))?.toMap();
     if (roomData != null) {
       var data = roomData!;
       // Firestore에서 받아온 데이터에 따라 멤버 체크

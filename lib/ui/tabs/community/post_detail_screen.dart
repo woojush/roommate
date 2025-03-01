@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'full_screen_image_viewer.dart';
+import 'package:findmate1/service/tabs/community/post.dart';
 
 class PostDetailScreen extends StatelessWidget {
   final Post post;

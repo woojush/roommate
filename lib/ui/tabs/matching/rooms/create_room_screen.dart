@@ -30,10 +30,10 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
     // 실제 Firestore 조회는 RoomService에서 처리하도록 변경 가능
     var data = await RoomService.fetchUserChecklist();
     setState(() {
-      dorm = data['dorm'];
-      roomType = data['roomType'];
-      gender = data['gender'];
-      dormDuration = data['dormDuration'];
+      dorm = data?['dorm'] ?? "미정";
+      roomType = data?['roomType'] ?? "미정";
+      gender = data?['gender'] ?? "미정";
+      dormDuration = data?['dormDuration'] ?? "미정";
       isLoadingChecklist = false;
     });
   }

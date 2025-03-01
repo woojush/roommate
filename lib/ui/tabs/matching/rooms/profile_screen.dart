@@ -6,11 +6,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:findmate1/ui/tabs/matching/checklist/checklist_item.dart'; // checklistPages 참조
+import 'package:findmate1/service/tabs/matching/checklist_item.dart'; // checklistPages 참조
 
 class ProfileScreen extends StatefulWidget {
   final String targetUid;
+
   ProfileScreen({required this.targetUid});
+
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
 }
@@ -25,16 +27,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadChecklist();
   }
 
+  /// 최상위 컬렉션 'checklists'에서 targetUid 문서 가져오기
   Future<void> _loadChecklist() async {
-    var doc = await _firestore
-        .collection('users')
-        .doc(widget.targetUid)
-        .collection('checklist')
-        .doc('latest')
-        .get();
-    if (doc.exists) setState(() { checklist = doc.data(); });
+    final docRef = _firestore
+        .collection('checklists')
+        .doc(widget.targetUid);
+    final docSnap = await docRef.get();
+
+    if (docSnap.exists) {
+      setState(() {
+        checklist = docSnap.data();
+      });
+    } else {
+      // 문서가 없을 경우
+      setState(() {
+        checklist = {};
+      });
+    }
   }
 
+  /// List 형식이면 join으로, null이면 "미작성"
   String _formatAnswer(dynamic answer) {
     if (answer == null) return "미작성";
     if (answer is List) return answer.join(', ');
@@ -44,8 +56,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (checklist == null) {
-      return Scaffold(appBar: AppBar(title: Text('체크리스트')), body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        appBar: AppBar(title: Text('체크리스트')),
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
+
+    // checklist가 비어있거나 특정 필드가 없을 수도 있음
     return Scaffold(
       appBar: AppBar(title: Text('체크리스트 보기')),
       body: ListView.builder(
@@ -56,7 +73,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('페이지 ${pageIndex + 1}', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(
+                '페이지 ${pageIndex + 1}',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               SizedBox(height: 8),
               ...page.map((question) {
                 final answer = checklist![question.id];
@@ -65,9 +85,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(question.question, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      Text(
+                        question.question,
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
                       SizedBox(height: 4),
-                      Text(_formatAnswer(answer), style: TextStyle(fontSize: 14)),
+                      Text(
+                        _formatAnswer(answer),
+                        style: TextStyle(fontSize: 14),
+                      ),
                       Divider(),
                     ],
                   ),

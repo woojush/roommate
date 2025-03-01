@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'post_card.dart';
 import 'new_post_screen.dart';
+import 'package:findmate1/service/tabs/community/post.dart';
 
 class BoardScreen extends StatelessWidget {
   final String boardType;

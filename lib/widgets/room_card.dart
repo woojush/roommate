@@ -1,9 +1,17 @@
+/// room_card.dart
+/// ---------------------------------------------------------------------------
+/// 이 파일은 매칭(룸) 목록에서 각 방(RoomModel)의 요약 정보를 카드 형태로 표시하는
+/// UI 위젯을 정의합니다.
+/// - RoomCard 위젯은 방의 제목, 기숙사 정보(생활관, 기숙사 기간, 인실, 성별),
+///   그리고 간단한 설명을 표시하며, 터치 시 방 상세 화면(RoomDetailScreen)으로 내비게이션합니다.
+/// ---------------------------------------------------------------------------
+
 import 'package:flutter/material.dart';
-import 'package:findmate1/tabs/rooms/rooms/room_model.dart';
-import 'package:findmate1/tabs/rooms/rooms/room_detail_screen.dart';
+import 'package:findmate1/service/tabs/matching/room_model.dart';
+import 'package:findmate1/ui/tabs/matching/rooms/room_detail_screen.dart';
 
 class RoomCard extends StatelessWidget {
-  final Room room;
+  final RoomModel room;
 
   const RoomCard({Key? key, required this.room}) : super(key: key);
 
@@ -19,7 +27,7 @@ class RoomCard extends StatelessWidget {
           BoxShadow(
             color: Colors.grey.withOpacity(0.3),
             blurRadius: 6,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           )
         ],
       ),
@@ -34,10 +42,11 @@ class RoomCard extends StatelessWidget {
           );
         },
         child: Container(
-          height: 120, // 원하는 고정 높이
+          height: 120, // 카드 고정 높이
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
+              // 방 대표 아이콘 영역 (예: 집 아이콘)
               Container(
                 width: 120,
                 height: double.infinity,
@@ -54,11 +63,13 @@ class RoomCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 12),
+              // 방 정보 표시 영역
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // 방 제목
                     Text(
                       room.title,
                       style: const TextStyle(
@@ -69,6 +80,7 @@ class RoomCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
+                    // 기숙사 정보 (생활관 | 기숙사 기간 | 인실 | 성별)
                     Text(
                       '${room.dorm} | ${room.dormDuration} | ${room.roomType} | ${room.gender}',
                       style: TextStyle(
@@ -79,6 +91,7 @@ class RoomCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
+                    // 방 설명
                     Text(
                       room.description,
                       style: const TextStyle(fontSize: 14),

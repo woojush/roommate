@@ -1,16 +1,20 @@
 /// ---------------------------------------------------------------------------
 /// 이 파일은 사용자가 새로운 게시글을 작성할 수 있는 UI를 제공합니다.
 /// - 제목, 내용 입력 필드와 이미지 선택 기능, 그리고 선택된 이미지의 미리보기를 포함합니다.
-/// - 작성 완료 시, 서비스 클래스를 호출하여 이미지 업로드 및 게시글 데이터를 Firestore에 저장합니다.
+/// - 작성 완료 시, PostService를 호출하여 이미지 업로드 및 게시글 데이터를 Firestore에 저장합니다.
+///
+/// 게시글을 최상위 컬렉션('posts')에 저장하되, boardType을 하나의 필드로 유지해
+/// 나중에 where("boardType", isEqualTo: ...)로 필터할 수 있게 설계했습니다.
 /// ---------------------------------------------------------------------------
 
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../services/post_service.dart';
+import 'package:findmate1/service/tabs/community/post_service.dart';
 
 class NewPostScreen extends StatefulWidget {
   final String boardType;
+
   const NewPostScreen({Key? key, required this.boardType}) : super(key: key);
 
   @override
@@ -37,21 +41,22 @@ class _NewPostScreenState extends State<NewPostScreen> {
 
   Future<void> _submitPost() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isUploading = true;
-      });
+      setState(() => _isUploading = true);
+
+      // 이미지 업로드
       List<String> imageUrls = [];
       if (_selectedImages.isNotEmpty) {
         imageUrls = await _postService.uploadImages(_selectedImages);
         if (imageUrls.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("이미지 업로드에 실패했습니다.")));
-          setState(() {
-            _isUploading = false;
-          });
+            SnackBar(content: Text("이미지 업로드에 실패했습니다.")),
+          );
+          setState(() => _isUploading = false);
           return;
         }
       }
+
+      // Firestore 저장
       try {
         await _postService.submitPost(
           title: _titleController.text,
@@ -60,7 +65,10 @@ class _NewPostScreenState extends State<NewPostScreen> {
           boardType: widget.boardType,
         );
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("게시글이 성공적으로 작성되었습니다.")));
+          SnackBar(content: Text("게시글이 성공적으로 작성되었습니다.")),
+        );
+
+        // 입력값 초기화
         _titleController.clear();
         _contentController.clear();
         setState(() {
@@ -71,10 +79,9 @@ class _NewPostScreenState extends State<NewPostScreen> {
       } catch (e) {
         print("Error submitting post: $e");
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("게시글 작성 중 오류가 발생했습니다.")));
-        setState(() {
-          _isUploading = false;
-        });
+          SnackBar(content: Text("게시글 작성 중 오류가 발생했습니다.")),
+        );
+        setState(() => _isUploading = false);
       }
     }
   }
@@ -95,19 +102,18 @@ class _NewPostScreenState extends State<NewPostScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 제목 입력 필드
+                // 제목
                 TextFormField(
                   controller: _titleController,
                   decoration: InputDecoration(
                     labelText: "제목",
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) => value == null || value.isEmpty
-                      ? "제목을 입력하세요."
-                      : null,
+                  validator: (value) =>
+                  value == null || value.isEmpty ? "제목을 입력하세요." : null,
                 ),
                 SizedBox(height: 16),
-                // 내용 입력 필드
+                // 내용
                 TextFormField(
                   controller: _contentController,
                   decoration: InputDecoration(
@@ -115,12 +121,12 @@ class _NewPostScreenState extends State<NewPostScreen> {
                     border: OutlineInputBorder(),
                   ),
                   maxLines: 6,
-                  validator: (value) => value == null || value.isEmpty
-                      ? "내용을 입력하세요."
-                      : null,
+                  validator: (value) =>
+                  value == null || value.isEmpty ? "내용을 입력하세요." : null,
                 ),
                 SizedBox(height: 16),
-                // 선택된 이미지 미리보기 (가로 스크롤)
+
+                // 선택된 이미지 미리보기
                 Text("선택된 이미지:",
                     style: TextStyle(fontWeight: FontWeight.bold)),
                 SizedBox(height: 8),
@@ -144,6 +150,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
                   ),
                 ),
                 SizedBox(height: 16),
+
                 // 버튼 행
                 Row(
                   children: [
