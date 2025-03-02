@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:findmate1/service/account/account_service.dart';
 import 'checklist_edit_screen.dart';
+import 'package:findmate1/theme.dart';
+import 'package:findmate1/widgets/sub_screen_appbar.dart';
 
 class ProfileDetailScreen extends StatefulWidget {
   @override
@@ -40,9 +42,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('프로필 상세'),
-      ),
+      appBar: SubScreenAppBar(title: '내 정보'),
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(
@@ -130,7 +130,6 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
             ),
           ],
         ),
-      ),
-    );
+      ));
   }
 }

@@ -13,6 +13,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:findmate1/ui/tabs/matching/checklist/checklist_screen.dart';
 import 'package:findmate1/ui/tabs/matching/rooms/room_list_screen.dart';
+import 'package:findmate1/widgets/main_tab_appbar.dart';
 
 class ChecklistRouter extends StatefulWidget {
   const ChecklistRouter({Key? key}) : super(key: key);
@@ -68,7 +69,7 @@ class _ChecklistRouterState extends State<ChecklistRouter> {
     // 체크리스트 미작성 → 체크리스트 작성 화면
     if (!_isChecklistComplete) {
       return Scaffold(
-        appBar: AppBar(title: Text('룸메이트 매칭')),
+        appBar: MainTabAppBar(title: '룸메이트 매칭'),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

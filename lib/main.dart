@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'config/firebase_options.dart';
 import 'package:findmate1/ui/account/login_screen.dart'; // 로그인 창
 import 'package:findmate1/ui/screens/main_screen.dart'; // 로그인 이후 나올 메인 스크린
+import 'theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // main()함수 내에서 async/await를 실행하기 전에 반드시 호출해야 하는 코드
@@ -29,7 +30,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'FindMate',
       theme: ThemeData(
-        primaryColor: Colors.black,
+        scaffoldBackgroundColor: AppTheme.backgroundColor,
       ),
       // 앱의 기본 색상 계열을 검은색으로 지정.
       home: FutureBuilder<firebase_auth.User?>(

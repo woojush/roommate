@@ -6,6 +6,7 @@
 
 import 'package:flutter/material.dart';
 import 'board_screen.dart';
+import 'package:findmate1/widgets/main_tab_appbar.dart';
 
 class CommunityTab extends StatelessWidget {
   const CommunityTab({Key? key}) : super(key: key);
@@ -13,7 +14,7 @@ class CommunityTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("커뮤니티")),
+      appBar: MainTabAppBar(title: '커뮤니티', actions: [TextButton(onPressed: (){}, child: Text('aa'))],),
       body: ListView(
         children: [
           ListTile(

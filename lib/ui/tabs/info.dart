@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:findmate1/widgets/design.dart'; // CustomListTile 등 디자인 위젯
+import 'package:findmate1/widgets/main_tab_appbar.dart';
 
 // 데이터를 담는 클래스들
 class InfoItem {
@@ -56,7 +57,7 @@ class Info extends StatelessWidget {
       ],
     ),
     InfoCategory(
-      title: '시설 안내',
+      title: '시설 및 전화번호 안내',
       items: [
         InfoItem(
           title: '제1학생생활관',
@@ -336,7 +337,7 @@ class Info extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('기숙사 정보')),
+      appBar: MainTabAppBar(title: '기숙사 정보'),
       body: ListView.builder(
         itemCount: categories.length,
         itemBuilder: (context, index) {

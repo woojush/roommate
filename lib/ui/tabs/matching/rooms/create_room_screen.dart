@@ -1,12 +1,8 @@
-/// ---------------------------------------------------------------------------
-/// 이 파일은 사용자가 새로운 방을 생성할 수 있는 UI를 제공합니다.
-/// - 입력 폼: 방 제목, 설명 입력 필드
-/// - 체크리스트에서 조회한 사용자 정보(생활관, 인실, 성별, 기숙사 기간)를 표시
-/// - 생성 버튼을 누르면 RoomService의 createRoom() 메서드를 호출하여 방 생성 요청을 수행합니다.
-/// ---------------------------------------------------------------------------
-
 import 'package:flutter/material.dart';
 import 'package:findmate1/service/tabs/matching/room_service.dart';
+import 'package:findmate1/widgets/sub_screen_appbar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CreateRoomScreen extends StatefulWidget {
   @override
@@ -14,7 +10,7 @@ class CreateRoomScreen extends StatefulWidget {
 }
 
 class _CreateRoomScreenState extends State<CreateRoomScreen> {
-  final _titleController = TextEditingController();
+  // 제목 입력 칸 제거 -> _titleController 삭제
   final _descController = TextEditingController();
   bool isLoadingChecklist = true;
   // 체크리스트 정보 저장 (UI에서는 조회 후 화면 표시)
@@ -23,11 +19,48 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
   @override
   void initState() {
     super.initState();
+    _checkUserInRoom();
     _loadChecklistData();
   }
 
+  Future<void> _checkUserInRoom() async {
+    bool alreadyInRoom = await _isUserInRoom();
+    if (alreadyInRoom) {
+      // 화면이 완전히 로드된 후 경고창을 띄우고, 확인 후 뒤로 이동
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('알림'),
+            content: Text('이미 참여하고 있는 방이 있습니다.'),
+            actions: [
+              TextButton(
+                child: Text('확인'),
+                onPressed: () {
+                  Navigator.pop(context); // 다이얼로그 닫기
+                },
+              ),
+            ],
+          ),
+        ).then((_) {
+          Navigator.pop(context); // 생성 화면 자체를 닫기
+        });
+      });
+    }
+  }
+
+  /// 현재 사용자가 이미 방에 참여 중인지 확인하는 함수
+  Future<bool> _isUserInRoom() async {
+    final user = await RoomService.getCurrentUser();
+    if (user == null) return false;
+    final qs = await FirebaseFirestore.instance
+        .collection('rooms')
+        .where('members', arrayContains: user.uid)
+        .get();
+    return qs.docs.isNotEmpty;
+  }
+
   Future<void> _loadChecklistData() async {
-    // 실제 Firestore 조회는 RoomService에서 처리하도록 변경 가능
     var data = await RoomService.fetchUserChecklist();
     setState(() {
       dorm = data?['dorm'] ?? "미정";
@@ -39,18 +72,23 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
   }
 
   void _createRoom() async {
-    String title = _titleController.text.trim();
     String description = _descController.text.trim();
-    if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('방 제목을 입력하세요')));
+    if (description.isEmpty) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('비고(설명)을 입력하세요')));
       return;
     }
-    if (dorm == null || roomType == null || gender == null || dormDuration == null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('체크리스트 정보를 불러오지 못했습니다.')));
+    if (dorm == null ||
+        roomType == null ||
+        gender == null ||
+        dormDuration == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('체크리스트 정보를 불러오지 못했습니다.')));
       return;
     }
+    // 방 제목은 하드코딩("방 제목") 처리
     bool success = await RoomService.createRoom(
-      title: title,
+      title: '방 제목',
       description: description,
       dorm: dorm!,
       roomType: roomType!,
@@ -63,7 +101,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('방 생성')),
+      appBar: SubScreenAppBar(title: '방 생성'),
       body: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
@@ -71,19 +109,23 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
           children: [
             isLoadingChecklist
                 ? Center(child: CircularProgressIndicator())
-                : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('생활관: ${dorm ?? "정보 없음"}', style: TextStyle(fontSize: 16)),
-                Text('인실: ${roomType ?? "정보 없음"}', style: TextStyle(fontSize: 16)),
-                Text('성별: ${gender ?? "정보 없음"}', style: TextStyle(fontSize: 16)),
-                Text('기숙사 기간: ${dormDuration ?? "정보 없음"}', style: TextStyle(fontSize: 16)),
-                SizedBox(height: 16),
-              ],
+                : Text(
+              "$dorm | $roomType | $dormDuration | $gender",
+              style: TextStyle(fontSize: 16),
             ),
-            TextField(controller: _titleController, decoration: InputDecoration(labelText: '방 제목')),
-            SizedBox(height: 8),
-            TextField(controller: _descController, decoration: InputDecoration(labelText: '비고(설명)')),
+            SizedBox(height: 16),
+            // 제목 입력 칸 제거
+            // 설명 입력 칸: 모서리가 둥근 네모 박스 스타일
+            TextField(
+              controller: _descController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                labelText: '비고(설명)',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
             SizedBox(height: 16),
             ElevatedButton(onPressed: _createRoom, child: Text('생성')),
           ],

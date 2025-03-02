@@ -66,7 +66,7 @@ class _CupertinoPickerWidgetState extends State<CupertinoPickerWidget> {
       children: [
         Text(
           widget.question.question,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize:  18, fontWeight: FontWeight.bold),
         ),
         SizedBox(height: 8),
         GestureDetector(
@@ -193,7 +193,7 @@ class _ButtonSelectionWidgetState extends State<ButtonSelectionWidget> {
           children: [
             Text(
               widget.question.question,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize:  18, fontWeight: FontWeight.bold),
             ),
             // 신입생이 dormError => 메시지 표시
             if (widget.question.id == "dorm" && dormErrorMessage != null)
@@ -312,7 +312,7 @@ class TimePickerWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(question.question, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        Text(question.question, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         SizedBox(height: 8),
         ElevatedButton(
           onPressed: () async {
@@ -364,7 +364,7 @@ class _TextInputWidgetState extends State<TextInputWidget> {
       children: [
         Text(
           widget.question.question, // 예: "하고 싶은 말"
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         SizedBox(height: 8),
         TextField(
@@ -429,7 +429,7 @@ class _MBTISelectionWidgetState extends State<MBTISelectionWidget> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(widget.question.question,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         SizedBox(height: 8),
         // 각 그룹 I/E, S/N, F/T, P/J
         ...mbtiGroups.asMap().entries.map((entry) {

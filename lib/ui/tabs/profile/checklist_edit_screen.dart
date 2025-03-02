@@ -82,7 +82,7 @@ class _ChecklistEditScreenState extends State<ChecklistEditScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('체크리스트 수정')),
+      appBar: AppBar(),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : ListView(

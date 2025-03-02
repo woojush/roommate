@@ -7,7 +7,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:findmate1/service/tabs/matching/room_service.dart';
-import 'profile_screen.dart';
+import 'package:findmate1/ui/tabs/profile/profile_screen.dart';
+import 'package:findmate1/widgets/sub_screen_appbar.dart';
+
 
 class RoomDetailScreen extends StatefulWidget {
   final String roomId;
@@ -69,7 +71,7 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     if (_loading) return Scaffold(appBar: AppBar(title: Text('방 정보')), body: Center(child: CircularProgressIndicator()));
     if (roomData == null) return Scaffold(appBar: AppBar(title: Text('방 정보')), body: Center(child: Text('존재하지 않는 방입니다.')));
     return Scaffold(
-      appBar: AppBar(title: Text(roomData!['title'] ?? '')),
+      appBar: SubScreenAppBar(title: '방 상세 정보'),
       body: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
