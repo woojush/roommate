@@ -41,7 +41,7 @@ class AccountService {
     required String id,
     required String password,
     required String email,
-    required String name,
+    required String username,
     String? profileImage, // 🟢 프로필 이미지 (선택 사항)
     String? dorm,         // 🟢 생활관
     String? roomType,     // 🟢 인실 정보
@@ -57,7 +57,7 @@ class AccountService {
     // Firestore에 사용자 정보 저장 (프로필 정보 포함)
     await _firestore.collection('users').doc(uid).set({
       'uid': uid,
-      'name': name,
+      'username': username,
       'email': email,
       'id': id,
       'phone': phone,
@@ -86,7 +86,7 @@ class AccountService {
   /// 🟢 프로필 업데이트 기능 추가
   static Future<void> updateUserProfile({
     required String uid,
-    String? name,
+    String? username,
     String? profileImage,
     String? dorm,
     String? roomType,
@@ -94,7 +94,7 @@ class AccountService {
   }) async {
     try {
       await _firestore.collection('users').doc(uid).update({
-        if (name != null) 'name': name,
+        if (username != null) 'username': username,
         if (profileImage != null) 'profileImage': profileImage,
         if (dorm != null) 'dorm': dorm,
         if (roomType != null) 'roomType': roomType,

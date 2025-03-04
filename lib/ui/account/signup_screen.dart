@@ -63,7 +63,7 @@ class _SignupScreenState extends State<SignupScreen> {
         id: _idController.text,
         password: _passwordController.text,
         email: _emailController.text,
-        name: _nameController.text,
+        username: _nameController.text,
       );
       Navigator.pop(context);
     } catch (e) {

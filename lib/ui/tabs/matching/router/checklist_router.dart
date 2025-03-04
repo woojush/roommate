@@ -1,19 +1,10 @@
-/// checklist_router.dart
-/// ---------------------------------------------------------------------------
-/// 이 파일은 사용자가 체크리스트를 작성했는지 여부를 확인하고,
-/// 체크리스트 미작성 시 체크리스트 작성 화면(ChecklistScreen)으로,
-/// 작성되었으면 매칭(방 목록) 화면(RoomListScreen)으로 라우팅하는 역할을 합니다.
-///
-/// 기존에는 'users/{uid}/checklist/latest' 경로에 문서를 두었으나,
-/// 이제 'checklists/{uid}' 최상위 컬렉션 사용 방식으로 변경합니다.
-/// ---------------------------------------------------------------------------
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:findmate1/ui/tabs/matching/checklist/checklist_screen.dart';
 import 'package:findmate1/ui/tabs/matching/rooms/room_list_screen.dart';
 import 'package:findmate1/widgets/main_tab_appbar.dart';
+import 'package:findmate1/service/tabs/matching/room/room_model.dart';
 
 class ChecklistRouter extends StatefulWidget {
   const ChecklistRouter({Key? key}) : super(key: key);
@@ -24,40 +15,59 @@ class ChecklistRouter extends StatefulWidget {
 
 class _ChecklistRouterState extends State<ChecklistRouter> {
   bool _isChecklistComplete = false;
-  bool _isLoading = false;
+  bool _isLoading = true;
+  RoomModel? _userRoom; // ✅ 사용자의 방 정보 저장
 
   @override
   void initState() {
     super.initState();
-    _checkChecklistStatus();
+    // 🚀 `addPostFrameCallback`을 사용하여 UI 빌드가 끝난 후 비동기 작업 실행
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkChecklistStatus();
+    });
   }
 
-  /// Firestore에서 'checklists/{uid}' 문서를 조회하여,
-  /// 체크리스트가 작성되었는지(doc.exists) 확인
+  /// Firestore에서 'checklists/{uid}' 문서를 조회하여 체크리스트 작성 여부 확인
   Future<void> _checkChecklistStatus() async {
-    setState(() {
-      _isLoading = true;
-    });
-
     final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      print("현재 로그인한 사용자 UID: ${user.uid}");
-      // 최상위 컬렉션 checklists / 문서 ID=user.uid
-      final docRef = FirebaseFirestore.instance
-          .collection('checklists')
-          .doc(user.uid);
-
-      final docSnapshot = await docRef.get();
-      _isChecklistComplete = docSnapshot.exists;
-
-      print("Firestore 경로 (${docRef.path})의 문서 존재 여부: ${docSnapshot.exists}");
-    } else {
+    if (user == null) {
       print("사용자가 로그인되어 있지 않습니다.");
+      setState(() {
+        _isLoading = false;
+      });
+      return;
     }
 
+    print("현재 로그인한 사용자 UID: ${user.uid}");
+
+    // ✅ 체크리스트 문서 가져오기
+    final checklistDoc = await FirebaseFirestore.instance
+        .collection('checklists')
+        .doc(user.uid)
+        .get();
+
+    bool checklistExists = checklistDoc.exists;
+    RoomModel? userRoom;
+
+    // ✅ Firestore에서 사용자의 방 정보도 가져오기 (해당 유저가 있는 방 조회)
+    final roomQuery = await FirebaseFirestore.instance
+        .collection('rooms')
+        .where('members', arrayContains: user.uid)
+        .limit(1)
+        .get();
+
+    if (roomQuery.docs.isNotEmpty) {
+      userRoom = RoomModel.fromMap(roomQuery.docs.first.data(), roomQuery.docs.first.id);
+    }
+
+    // 🚀 빌드가 끝난 후 UI 업데이트
     setState(() {
+      _isChecklistComplete = checklistExists;
+      _userRoom = userRoom;
       _isLoading = false;
     });
+
+    print("Firestore 경로 (${checklistDoc.reference.path})의 문서 존재 여부: $checklistExists");
   }
 
   @override
@@ -83,7 +93,11 @@ class _ChecklistRouterState extends State<ChecklistRouter> {
                     context,
                     MaterialPageRoute(builder: (context) => ChecklistScreen()),
                   );
-                  if (result == true) _checkChecklistStatus();
+                  if (result == true) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _checkChecklistStatus();
+                    });
+                  }
                 },
                 child: Text(
                   '체크리스트 작성',
@@ -99,7 +113,25 @@ class _ChecklistRouterState extends State<ChecklistRouter> {
       );
     }
 
-    // 체크리스트 작성 완료 → 방 목록 화면
-    return RoomListScreen();
+    // 체크리스트 작성 완료 → 방 목록 화면 (room이 있으면 전달, 없으면 기본값 전달)
+    return RoomListScreen(
+      room: _userRoom ??
+          RoomModel(
+            id: "default",
+            title: "룸메이트 찾기",
+            description: "현재 방이 없습니다.",
+            dorm: "미정",
+            roomType: "미정",
+            gender: "미정",
+            dormDuration: "미정",
+            ownerUid: "",
+            members: [],
+            joinRequests: [],
+            createdAt: DateTime.now(),
+            checklist: {},
+            maxMembers: 2,
+            views: 0,
+          ),
+    );
   }
 }

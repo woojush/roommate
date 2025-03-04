@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:findmate1/service/tabs/matching/room_service.dart';
+import 'package:findmate1/service/tabs/matching/room/room_service.dart';
 import 'package:findmate1/widgets/sub_screen_appbar.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CreateRoomScreen extends StatefulWidget {
   @override
@@ -10,11 +8,9 @@ class CreateRoomScreen extends StatefulWidget {
 }
 
 class _CreateRoomScreenState extends State<CreateRoomScreen> {
-  // 제목 입력 칸 제거 -> _titleController 삭제
   final _descController = TextEditingController();
   bool isLoadingChecklist = true;
-  // 체크리스트 정보 저장 (UI에서는 조회 후 화면 표시)
-  String? dorm, roomType, gender, dormDuration;
+  String? title, dorm, roomType, gender, dormDuration;
 
   @override
   void initState() {
@@ -24,9 +20,8 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
   }
 
   Future<void> _checkUserInRoom() async {
-    bool alreadyInRoom = await _isUserInRoom();
+    bool alreadyInRoom = await RoomService.isUserInRoom();
     if (alreadyInRoom) {
-      // 화면이 완전히 로드된 후 경고창을 띄우고, 확인 후 뒤로 이동
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showDialog(
           context: context,
@@ -37,32 +32,22 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
               TextButton(
                 child: Text('확인'),
                 onPressed: () {
-                  Navigator.pop(context); // 다이얼로그 닫기
+                  Navigator.pop(context);
                 },
               ),
             ],
           ),
         ).then((_) {
-          Navigator.pop(context); // 생성 화면 자체를 닫기
+          Navigator.pop(context);
         });
       });
     }
   }
 
-  /// 현재 사용자가 이미 방에 참여 중인지 확인하는 함수
-  Future<bool> _isUserInRoom() async {
-    final user = await RoomService.getCurrentUser();
-    if (user == null) return false;
-    final qs = await FirebaseFirestore.instance
-        .collection('rooms')
-        .where('members', arrayContains: user.uid)
-        .get();
-    return qs.docs.isNotEmpty;
-  }
-
   Future<void> _loadChecklistData() async {
     var data = await RoomService.fetchUserChecklist();
     setState(() {
+      title = data?['title'] ?? "미정";
       dorm = data?['dorm'] ?? "미정";
       roomType = data?['roomType'] ?? "미정";
       gender = data?['gender'] ?? "미정";
@@ -78,17 +63,13 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
           .showSnackBar(SnackBar(content: Text('비고(설명)을 입력하세요')));
       return;
     }
-    if (dorm == null ||
-        roomType == null ||
-        gender == null ||
-        dormDuration == null) {
+    if (dorm == null || roomType == null || gender == null || dormDuration == null) {
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('체크리스트 정보를 불러오지 못했습니다.')));
       return;
     }
-    // 방 제목은 하드코딩("방 제목") 처리
     bool success = await RoomService.createRoom(
-      title: '방 제목',
+      title: title!,
       description: description,
       dorm: dorm!,
       roomType: roomType!,
@@ -109,13 +90,19 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
           children: [
             isLoadingChecklist
                 ? Center(child: CircularProgressIndicator())
-                : Text(
-              "$dorm | $roomType | $dormDuration | $gender",
-              style: TextStyle(fontSize: 16),
+                : Container(
+              decoration: BoxDecoration(border: Border.all(width: 2)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text('$dorm'),
+                  Text('$roomType'),
+                  Text('$dormDuration'),
+                  Text('$gender'),
+                ],
+              ),
             ),
             SizedBox(height: 16),
-            // 제목 입력 칸 제거
-            // 설명 입력 칸: 모서리가 둥근 네모 박스 스타일
             TextField(
               controller: _descController,
               maxLines: 3,
