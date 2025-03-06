@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-import 'package:findmate1/service/tabs/matching/checklist_provider.dart';
+import 'package:findmate1/service/tabs/matching/checklist/checklist_provider.dart';
 
 class ChecklistEditScreen extends StatefulWidget {
   @override

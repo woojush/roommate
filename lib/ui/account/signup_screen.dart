@@ -1,11 +1,3 @@
-/// signup_screen.dart
-/// ---------------------------------------------------------------------------
-/// 이 파일은 사용자에게 회원가입 UI를 제공하는 화면입니다.
-/// - 전화번호, 인증번호, 이메일, 이름, 생년월일, 아이디, 비밀번호 입력 필드를 포함합니다.
-/// - 각 입력값의 중복 체크와 인증번호 처리는 UI에서 수행하고,
-///   최종 회원가입 요청은 AccountService.signup()을 호출하여 백엔드에서 처리합니다.
-/// ---------------------------------------------------------------------------
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:findmate1/widgets/textFieldAndButton.dart'; // CustomInputButton 위젯 사용
@@ -32,9 +24,9 @@ class _SignupScreenState extends State<SignupScreen> {
   final _firestore = FirebaseFirestore.instance; // 중복 체크용 Firestore 인스턴스
   bool _isLoading = false;
   bool _isIdChecked = false;
-  bool _isOtpSent = false;
+  bool _isEmailChecked = false;
   String _idCheckMessage = '';
-  String _emailError = '';
+  String _emailCheckMessage = '';
 
   /// 아이디 중복 확인: Firestore에서 해당 아이디가 사용 중인지 확인
   Future<void> _checkIdExists() async {
@@ -45,9 +37,27 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() {
       if (query.docs.isNotEmpty) {
         _idCheckMessage = '이미 존재하는 아이디입니다.';
+        _isIdChecked = false;
       } else {
         _idCheckMessage = '사용 가능한 아이디입니다!';
         _isIdChecked = true;
+      }
+    });
+  }
+
+  /// 이메일 중복 확인: Firestore에서 해당 이메일이 사용 중인지 확인
+  Future<void> _checkEmailExists() async {
+    final query = await _firestore
+        .collection('users')
+        .where('email', isEqualTo: _emailController.text)
+        .get();
+    setState(() {
+      if (query.docs.isNotEmpty) {
+        _emailCheckMessage = '이미 사용 중인 이메일입니다.';
+        _isEmailChecked = false;
+      } else {
+        _emailCheckMessage = '사용 가능한 이메일입니다!';
+        _isEmailChecked = true;
       }
     });
   }
@@ -63,7 +73,7 @@ class _SignupScreenState extends State<SignupScreen> {
         id: _idController.text,
         password: _passwordController.text,
         email: _emailController.text,
-        username: _nameController.text,
+        userName: _nameController.text,
       );
       Navigator.pop(context);
     } catch (e) {
@@ -72,7 +82,7 @@ class _SignupScreenState extends State<SignupScreen> {
     setState(() => _isLoading = false);
   }
 
-  /// 입력값 검증
+  /// 입력값 검증: 각 필드의 값이 올바른지, 아이디와 이메일 중복 확인을 완료했는지 체크합니다.
   bool _validateInputs() {
     if (_phoneController.text.isEmpty) {
       _showError("전화번호를 입력하세요.");
@@ -90,6 +100,19 @@ class _SignupScreenState extends State<SignupScreen> {
       _showError("아이디 중복 체크를 해주세요.");
       return false;
     }
+    if (_emailController.text.isEmpty) {
+      _showError("이메일을 입력하세요.");
+      return false;
+    }
+    // 기본적인 이메일 형식 검증
+    if (!_emailController.text.contains('@')) {
+      _showError("올바른 이메일을 입력하세요.");
+      return false;
+    }
+    if (!_isEmailChecked) {
+      _showError("이메일 중복 체크를 해주세요.");
+      return false;
+    }
     if (_passwordController.text.isEmpty) {
       _showError("비밀번호를 입력하세요.");
       return false;
@@ -97,80 +120,93 @@ class _SignupScreenState extends State<SignupScreen> {
     return true;
   }
 
+  /// 오류 메시지를 스낵바로 표시합니다.
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
+  /// 성공 메시지를 스낵바로 표시합니다.
   void _showSuccess(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
   }
 
-  // 인증번호 요청, 인증번호 확인 등 기타 함수는 필요에 따라 UI에 포함 (생략 가능)
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("회원가입")),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            CustomInputButton(
-              controller: _phoneController,
-              labelText: "전화번호 (01000000000)",
-              onPressed: _isLoading ? null : () => print("인증 요청 버튼 눌림"),
-              buttonText: "인증 요청",
-              inputFormatters: [
-                FilteringTextInputFormatter.deny(RegExp(r"\s")),
-                LengthLimitingTextInputFormatter(13),
-              ],
-            ),
-            CustomInputButton(
-              controller: _otpController,
-              labelText: "인증번호",
-              onPressed: _isLoading ? null : () => print("인증 확인 버튼 눌림"),
-              buttonText: "인증 확인",
-              inputFormatters: [
-                FilteringTextInputFormatter.deny(RegExp(r"\s")),
-                LengthLimitingTextInputFormatter(6),
-              ],
-            ),
-            TextField(
-              controller: _emailController,
-              decoration: InputDecoration(
-                labelText: '이메일',
-                errorText: _emailError.isNotEmpty ? _emailError : null,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            children: [
+              CustomInputButton(
+                controller: _phoneController,
+                labelText: "전화번호 (01000000000)",
+                onPressed: _isLoading ? null : () => print("인증 요청 버튼 눌림"),
+                buttonText: "인증 요청",
+                inputFormatters: [
+                  FilteringTextInputFormatter.deny(RegExp(r"\s")),
+                  LengthLimitingTextInputFormatter(13),
+                ],
               ),
-              onChanged: (value) {
-                setState(() {
-                  _emailError = value.contains('@') ? '' : '올바른 이메일을 입력하세요.';
-                });
-              },
-            ),
-            TextField(controller: _nameController, decoration: const InputDecoration(labelText: "이름")),
-            TextField(
-              controller: _birthController,
-              decoration: const InputDecoration(labelText: "생년월일 (YYYY-MM-DD)"),
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
-            ),
-            CustomInputButton(
-              controller: _idController,
-              labelText: "아이디",
-              onPressed: _checkIdExists,
-              buttonText: "중복 확인",
-            ),
-            if (_idCheckMessage.isNotEmpty)
-              Text(
-                _idCheckMessage,
-                style: TextStyle(color: _idCheckMessage.contains("가능") ? Colors.green : Colors.red),
+              CustomInputButton(
+                controller: _otpController,
+                labelText: "인증번호",
+                onPressed: _isLoading ? null : () => print("인증 확인 버튼 눌림"),
+                buttonText: "인증 확인",
+                inputFormatters: [
+                  FilteringTextInputFormatter.deny(RegExp(r"\s")),
+                  LengthLimitingTextInputFormatter(6),
+                ],
               ),
-            TextField(controller: _passwordController, decoration: InputDecoration(labelText: '비밀번호')),
-            TextButton(onPressed: _isLoading ? null : _signup, child: const Text('회원가입 완료'))
-          ],
+              // 이메일 입력 및 중복 확인 버튼
+              CustomInputButton(
+                controller: _emailController,
+                labelText: "이메일",
+                onPressed: _checkEmailExists,
+                buttonText: "중복 확인",
+              ),
+              if (_emailCheckMessage.isNotEmpty)
+                Text(
+                  _emailCheckMessage,
+                  style: TextStyle(
+                    color: _emailCheckMessage.contains("사용 가능한") ? Colors.green : Colors.red,
+                  ),
+                ),
+              TextField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: "이름"),
+              ),
+              TextField(
+                controller: _birthController,
+                decoration: const InputDecoration(labelText: "생년월일 (YYYY-MM-DD)"),
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)],
+              ),
+              // 아이디 입력 및 중복 확인 버튼
+              CustomInputButton(
+                controller: _idController,
+                labelText: "아이디",
+                onPressed: _checkIdExists,
+                buttonText: "중복 확인",
+              ),
+              if (_idCheckMessage.isNotEmpty)
+                Text(
+                  _idCheckMessage,
+                  style: TextStyle(
+                      color: _idCheckMessage.contains("사용 가능한") ? Colors.green : Colors.red),
+                ),
+              TextField(
+                controller: _passwordController,
+                decoration: const InputDecoration(labelText: '비밀번호'),
+                obscureText: true,
+              ),
+              TextButton(onPressed: _isLoading ? null : _signup, child: const Text('회원가입 완료'))
+            ],
+          ),
         ),
       ),
     );

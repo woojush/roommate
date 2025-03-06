@@ -22,7 +22,7 @@ class RoomFilter extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.filter_list),
             onPressed: () {
-              // ✅ 필터 기능 추가 예정
+              // 필터 기능 추가 예정
             },
           ),
         ],

@@ -5,10 +5,10 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import 'package:findmate1/service/tabs/matching/checklist_item.dart';
-import 'package:findmate1/service/tabs/matching/checklist_provider.dart';
+import 'package:findmate1/service/tabs/matching/checklist/checklist_item.dart';
+import 'package:findmate1/service/tabs/matching/checklist/checklist_provider.dart';
 import 'package:findmate1/widgets/sub_screen_appbar.dart';
-import 'package:findmate1/service/tabs/matching/checklist_service.dart';
+import 'package:findmate1/service/tabs/matching/checklist/checklist_service.dart';
 
 class ChecklistScreen extends StatelessWidget {
   @override

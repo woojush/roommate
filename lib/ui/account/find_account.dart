@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:findmate1/widgets/sub_screen_appbar.dart';
 
 class FindAccount extends StatefulWidget {
   const FindAccount({super.key});
@@ -65,30 +66,17 @@ class _FindAccountState extends State<FindAccount> with SingleTickerProviderStat
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
+      appBar: SubScreenAppBar(
+        title:
           _selectedTabIndex == 0 ? "아이디 찾기" : "비밀번호 찾기", // ✅ 탭에 따라 AppBar 제목 변경
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
       ),
       body: Column(
         children: [
           // 탭바 (아이디 찾기 / 비밀번호 찾기)
           TabBar(
             controller: _tabController,
-            indicatorColor: Colors.red,
-            labelColor: Colors.red,
+            indicatorColor: Colors.blue,
+            labelColor: Colors.blue,
             unselectedLabelColor: Colors.grey,
             labelStyle: const TextStyle(fontWeight: FontWeight.bold),
             tabs: const [
@@ -142,7 +130,7 @@ class _FindAccountState extends State<FindAccount> with SingleTickerProviderStat
           ElevatedButton(
             onPressed: () {}, // 아이디 찾기 기능 추가 필요
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.blue,
               minimumSize: const Size(double.infinity, 50),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -185,7 +173,7 @@ class _FindAccountState extends State<FindAccount> with SingleTickerProviderStat
           ElevatedButton(
             onPressed: () {}, // 비밀번호 찾기 기능 추가 필요
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: Colors.blue,
               minimumSize: const Size(double.infinity, 50),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),

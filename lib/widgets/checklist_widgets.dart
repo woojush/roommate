@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
-import 'package:findmate1/service/tabs/matching/checklist_item.dart';
-import 'package:findmate1/service/tabs/matching/checklist_provider.dart';
+import 'package:findmate1/service/tabs/matching/checklist/checklist_item.dart';
+import 'package:findmate1/service/tabs/matching/checklist/checklist_provider.dart';
 
 /// (1) CupertinoPickerWidget
 ///     - showerDuration, alcoholAmount => 첫번째(0)

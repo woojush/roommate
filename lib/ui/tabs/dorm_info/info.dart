@@ -346,6 +346,8 @@ class Info extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             elevation: 2,
             child: ExpansionTile(
+              backgroundColor: Colors.white,
+              collapsedBackgroundColor: Colors.blue.shade100,
               // 메인 카테고리 타이틀 좌측 여백을 줄임
               tilePadding: const EdgeInsets.symmetric(horizontal: 0.0),
               title: Text(

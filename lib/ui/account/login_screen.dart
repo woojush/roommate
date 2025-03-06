@@ -11,6 +11,7 @@ import 'package:findmate1/service/account/account_service.dart';
 import 'package:findmate1/ui/account/signup_screen.dart';
 import 'package:findmate1/ui/screens/main_screen.dart';
 import 'package:findmate1/ui/account/find_account.dart';
+import 'package:findmate1/widgets/warning_dialog.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -70,34 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showErrorDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        contentPadding: const EdgeInsets.all(20), // 내부 여백 조정
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              "올바른 정보를 입력해주세요.",
-              style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.w700),
-            ),
-            SizedBox(height: 10,),
-            const Divider(color: Colors.grey, thickness: 1), // 구분선 추가
-            SizedBox(
-              width: double.infinity, // 버튼을 하단에 꽉 차게 설정
-              child: TextButton(
-                onPressed: () => Navigator.pop(context), // 닫기 버튼
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.transparent, // 배경색 투명
-                  shape: const RoundedRectangleBorder(), // 기본 모양 유지
-                ),
-                child: const Text(
-                  "닫기",
-                  style: TextStyle(color: Colors.blue, fontSize: 16),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      builder: (context) => WarningDialog(message: '정보를 올바르게 작성해주세요.')
     );
   }
 
@@ -215,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: ElevatedButton(
                   onPressed: _isButtonActive ? _login : null, // 아이디 & 비밀번호가 입력되지 않으면 버튼 비활성화
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: _isButtonActive ? Colors.red : Colors.grey, // 입력 여부에 따라 버튼 색상 변경
+                      backgroundColor: _isButtonActive ? Colors.blue : Colors.grey, // 입력 여부에 따라 버튼 색상 변경
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.5), // 둥근 정도 조정 (값이 클수록 더 둥글어짐)
                       )

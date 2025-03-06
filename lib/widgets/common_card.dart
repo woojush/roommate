@@ -1,38 +1,45 @@
 import 'package:flutter/material.dart';
 
-/// ✅ 공통 카드 위젯
+/// ✅ 공통 카드 위젯 (Container 기반, 모든 방향에 그림자 적용)
 class CommonCard extends StatelessWidget {
   final Widget child;
   final VoidCallback? onTap;
   final EdgeInsetsGeometry padding;
-  final double elevation;
   final Color color;
-  final ShapeBorder? shape;
+  final double cardRadius;
+  final List<BoxShadow>? cardShadow;
 
   const CommonCard({
     Key? key,
     required this.child,
     this.onTap,
     this.padding = const EdgeInsets.all(16.0),
-    this.elevation = 3,
     this.color = Colors.white,
-    this.shape,
+    this.cardRadius = 12,
+    this.cardShadow,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Card(
-        color: color,
-        elevation: elevation,
-        shape: shape ?? RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: padding,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(cardRadius),
+          boxShadow: cardShadow ??
+              [
+                // 모든 방향에 균일한 그림자 적용
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  spreadRadius: 3,
+                  blurRadius: 5,
+                  offset: const Offset(0, 0),
+                ),
+              ],
         ),
-        child: Padding(
-          padding: padding,
-          child: child,
-        ),
+        child: child,
       ),
     );
   }

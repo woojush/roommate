@@ -36,7 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         setState(() {
-          userName = data["name"] ?? "사용자";
+          userName = data["userName"] ?? "사용자";
           profileImage = data["profileImage"] ?? "";
         });
       }

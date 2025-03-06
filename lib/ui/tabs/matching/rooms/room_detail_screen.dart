@@ -1,11 +1,3 @@
-/// ---------------------------------------------------------------------------
-/// 이 파일은 선택한 방의 상세 정보를 표시하는 UI를 제공합니다.
-/// - 방 제목, 설명, 기숙사 기간 등 정보를 표시합니다.
-/// - 룸메 신청, 승인/거절 등의 상호작용을 위한 버튼과 멤버 리스트를 포함합니다.
-/// - 데이터 조회 및 업데이트는 RoomService를 통해 백엔드 로직으로 위임합니다.
-/// - 방 상세 정보를 보고 나가면 자동으로 목록이 새로고침됩니다.
-/// ---------------------------------------------------------------------------
-
 import 'package:flutter/material.dart';
 import 'package:findmate1/ui/tabs/profile/profile_screen.dart';
 import 'package:findmate1/widgets/sub_screen_appbar.dart';
@@ -33,13 +25,10 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     _incrementRoomViews(widget.roomId);
   }
 
-
-  /// ✅ Firestore에서 방 조회수 증가
   void _incrementRoomViews(String roomId) async {
-    await RoomViews.increment(widget.roomId);
+    await RoomService.incrementRoomViews(roomId);
   }
 
-  /// ✅ 룸메 신청 기능
   void _requestJoin() async {
     bool result = await RoomService.requestJoin(widget.roomId);
     if (result) {
@@ -49,19 +38,16 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     }
   }
 
-  /// ✅ 방 신청 승인
   void _approveUser(String applicantUid) async {
     await RoomService.approveUser(widget.roomId, applicantUid);
     setState(() {});
   }
 
-  /// ✅ 방 신청 거절
   void _rejectUser(String applicantUid) async {
     await RoomService.rejectUser(widget.roomId, applicantUid);
     setState(() {});
   }
 
-  /// ✅ 사용자 체크리스트 보기
   void _viewUserChecklist(String uid) {
     Navigator.push(
       context,
@@ -69,6 +55,14 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
         builder: (_) => ProfileScreen(targetUid: uid),
       ),
     );
+  }
+
+  void _loadRoom() async {
+    var room = await RoomService.fetchRoom(widget.roomId);
+    setState(() {
+      roomData = room?.toMap();
+      _loading = false;
+    });
   }
 
   @override
@@ -87,33 +81,58 @@ class _RoomDetailScreenState extends State<RoomDetailScreen> {
     }
 
     return Scaffold(
-      appBar: SubScreenAppBar(title: '방 상세 정보'),
+      appBar: SubScreenAppBar(
+        title: '방 상세 정보',
+        onBackPressed: () {
+          Navigator.pop(context, true);
+        },
+      ),
       body: Padding(
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Text('${roomData!['title'] ?? ''}', style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),),
             Text('방 설명: ${roomData!['description'] ?? ''}'),
             SizedBox(height: 8),
             Text('기숙사 기간: ${roomData!['dormDuration'] ?? '미작성'}'),
             SizedBox(height: 16),
             Text('현재 멤버:'),
-            // 🔹 멤버 리스트 UI (생략)
+            // 멤버 리스트 UI (생략)
             if (!_isMember && !_isCreatedByMe)
               ElevatedButton(
-                onPressed: _requestJoin,
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('확인'),
+                        content: Text('룸메 요청을 보내시겠습니까?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              // 취소 시 다이얼로그 닫기
+                              Navigator.of(context).pop();
+                            },
+                            child: Text('취소'),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              // 확인 시 _requestJoin 함수 실행 후 다이얼로그 닫기
+                              _requestJoin();
+                              Navigator.of(context).pop();
+                            },
+                            child: Text('확인'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
                 child: Text('룸메 신청'),
-              ),
-            // 🔹 신청 목록 및 승인/거절 UI (생략)
+              )
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // ✅ 뒤로 갈 때 자동 새로고침을 위해 true 반환
-          Navigator.pop(context, true);
-        },
-        child: Icon(Icons.arrow_back),
       ),
     );
   }

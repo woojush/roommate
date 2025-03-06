@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:findmate1/service/tabs/matching/room/room_model.dart'; // ✅ 올바른 경로 확인
+import 'package:findmate1/service/tabs/matching/room/room_model.dart';
 import 'package:findmate1/service/tabs/matching/room/room_provider.dart';
 import 'package:findmate1/service/tabs/matching/room/room_service.dart';
 import 'package:findmate1/widgets/main_tab_appbar.dart';
 import 'package:findmate1/ui/tabs/matching/rooms/room_card.dart';
 import 'package:findmate1/ui/tabs/matching/rooms/room_filter_button.dart';
 import 'create_room_screen.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:findmate1/widgets/warning_dialog.dart';
 
 class RoomListScreen extends StatefulWidget {
   final RoomModel room;
@@ -18,16 +18,16 @@ class RoomListScreen extends StatefulWidget {
 }
 
 class _RoomListScreenState extends State<RoomListScreen> {
-  Future<List<RoomModel>>? _roomFuture; // ✅ nullable Future로 변경
+  Future<List<RoomModel>>? _roomFuture;
 
   @override
   void initState() {
     super.initState();
-    _fetchRooms(); // ✅ 초기화
+    _fetchRooms();
   }
 
   Future<void> _fetchRooms() async {
-    final future = RoomService.fetchRooms(); // ✅ setState() 없이 Future 실행
+    final future = RoomService.fetchRooms();
     setState(() {
       _roomFuture = future;
     });
@@ -47,7 +47,10 @@ class _RoomListScreenState extends State<RoomListScreen> {
           }
 
           return Scaffold(
-            appBar: MainTabAppBar(title: "룸메이트 찾기"),
+            appBar: MainTabAppBar(title: "룸메이트 찾기",
+            actions: [
+              IconButton(onPressed: (){}, icon: Icon(Icons.mail))
+            ],),
             body: RefreshIndicator(
               onRefresh: _fetchRooms,
               child: Column(
@@ -70,28 +73,26 @@ class _RoomListScreenState extends State<RoomListScreen> {
                       future: _roomFuture,
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
-                          return Center(child: CircularProgressIndicator()); // ✅ 데이터 로딩 중
+                          return Center(child: CircularProgressIndicator());
                         }
                         if (!snapshot.hasData || snapshot.data!.isEmpty) {
                           return Center(child: Text('등록된 방이 없습니다.'));
                         }
-
-                        // ✅ UI 빌드가 끝난 후 `filterRooms()` 실행하여 오류 방지
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           if (mounted) {
                             provider.filterRooms(snapshot.data!);
                           }
                         });
-
                         return ListView.builder(
                           itemCount: provider.filteredRooms.length,
                           itemBuilder: (context, index) {
                             final room = provider.filteredRooms[index];
                             return RoomCard(
-                                room: room,
-                                onRefresh: () {
-                                  provider.increaseViewCount(room);
-                                });
+                              room: room,
+                              onRefresh: () {
+                                provider.increaseViewCount(room);
+                              },
+                            );
                           },
                         );
                       },
@@ -102,49 +103,13 @@ class _RoomListScreenState extends State<RoomListScreen> {
             ),
             floatingActionButton: FloatingActionButton.extended(
               onPressed: () async {
-                final user = await RoomService.getCurrentUser();
-                if (user != null) {
-                  final qs = await FirebaseFirestore.instance
-                      .collection('rooms')
-                      .where('members', arrayContains: user.uid)
-                      .get();
-                  if (qs.docs.isNotEmpty) {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        contentPadding: EdgeInsets.fromLTRB(24, 20, 15, 20),
-                        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        content: Text(
-                          '이미 참여하고 있는 방이 있습니다.',
-                          style: TextStyle(
-                              fontSize: 17, fontWeight: FontWeight.bold),
-                        ),
-                        actions: [
-                          Container(
-                            width: double.infinity,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Colors.blue,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: Text(
-                                '확인',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          )
-                        ],
-                      ),
-                    );
-                    return;
-                  }
+                bool alreadyInRoom = await RoomService.isUserInRoom();
+                if (alreadyInRoom) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => WarningDialog(message: '이미 참여하고 있는 방이 있습니다.')
+                  );
+                  return;
                 }
                 Navigator.push(
                   context,

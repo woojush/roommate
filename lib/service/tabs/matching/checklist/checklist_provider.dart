@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:findmate1/service/tabs/matching/checklist_item.dart';
+import 'package:findmate1/service/tabs/matching/checklist/checklist_item.dart';
 import 'package:findmate1/widgets/checklist_widgets.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';

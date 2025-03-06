@@ -5,41 +5,49 @@ class SubScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final List<Widget>? actions;
   final bool showBackButton;
-  final double FontSize; // title의 폰트 사이즈를 조절할 수 있는 매개변수
+  final double FontSize; // title의 폰트 사이즈 조절
+  final VoidCallback? onBackPressed; // 사용자 정의 뒤로가기 동작
 
   const SubScreenAppBar({
     super.key,
     required this.title,
     this.actions,
     this.showBackButton = true,
-    this.FontSize = 17, // 기본값 20
+    this.FontSize = 17,
+    this.onBackPressed,
   });
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: AppTheme.appBarColor, // ✅ 테마 적용
+      backgroundColor: AppTheme.appBarColor,
       elevation: 0,
       leading: showBackButton
           ? IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.black), // ✅ 뒤로 가기 버튼
-        onPressed: () => Navigator.of(context).pop(),
+        icon: const Icon(Icons.arrow_back, color: Colors.black),
+        onPressed: () {
+          if (onBackPressed != null) {
+            onBackPressed!();
+          } else {
+            Navigator.of(context).pop();
+          }
+        },
       )
-          : null, // ✅ `showBackButton`이 false면 숨김
+          : null,
       title: Text(
         title,
         style: TextStyle(
-          fontSize: FontSize, // 사용자 지정 폰트 사이즈 적용
+          fontSize: FontSize,
           fontWeight: FontWeight.bold,
         ),
       ),
-      centerTitle: true, // ✅ 서브 스크린에서는 보통 타이틀이 중앙 정렬됨
+      centerTitle: true,
       actions: actions,
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1.0),
         child: Container(
-          color: Colors.grey, // ✅ 구분선 색상
-          height: 0.8, // ✅ 구분선 두께
+          color: Colors.grey,
+          height: 0.8,
         ),
       ),
     );
