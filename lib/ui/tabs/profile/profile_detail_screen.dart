@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:findmate1/service/account/account_service.dart';
-import 'checklist_edit_screen.dart';
+import 'package:findmate1/ui/account/login_screen.dart';
+import 'package:findmate1/ui/tabs/profile/profile_screen.dart';
+import 'package:findmate1/ui/tabs/matching/checklist/checklist_edit_screen.dart';
 import 'package:findmate1/theme.dart';
 import 'package:findmate1/widgets/sub_screen_appbar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:findmate1/widgets/warning_dialog.dart';
 
 class ProfileDetailScreen extends StatefulWidget {
   @override
@@ -26,16 +30,21 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   Future<void> _loadUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
+      // 사용자 기본 정보는 users 컬렉션에서 가져옴
       final userData = await AccountService.getUserProfile(user.uid);
-      if (userData != null) {
-        setState(() {
-          userName = userData['name'] ?? "사용자";
-          profileImage = userData['profileImage'] ?? "";
-          dorm = userData['dorm'] ?? "정보 없음";
-          roomType = userData['roomType'] ?? "정보 없음";
-          dormDuration = userData['dormDuration'] ?? "정보 없음";
-        });
-      }
+      // 기숙사 정보는 checklists 컬렉션에서 가져옴
+      final checklistDoc = await FirebaseFirestore.instance
+          .collection('checklists')
+          .doc(user.uid)
+          .get();
+
+      setState(() {
+        userName = userData?['name'] ?? "사용자";
+        profileImage = userData?['profileImage'] ?? "";
+        dorm = checklistDoc.exists ? (checklistDoc.data()?['dorm'] ?? "정보 없음") : "정보 없음";
+        roomType = checklistDoc.exists ? (checklistDoc.data()?['roomType'] ?? "정보 없음") : "정보 없음";
+        dormDuration = checklistDoc.exists ? (checklistDoc.data()?['dormDuration'] ?? "정보 없음") : "정보 없음";
+      });
     }
   }
 
@@ -43,12 +52,14 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: SubScreenAppBar(title: '내 정보'),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
+      body: Container(
+        color: Colors.white,
+          child: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start, // 왼쪽 정렬
           children: [
-            // 🟢 프로필 이미지 + 사용자 이름 (가로 배치)
+            // 프로필 이미지와 사용자 이름 (가로 배치)
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -58,16 +69,20 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                       ? NetworkImage(profileImage)
                       : AssetImage("assets/default_profile.png") as ImageProvider,
                 ),
-                SizedBox(width: 16), // 아이콘과 텍스트 간격 조절
+                const SizedBox(width: 16),
                 Text(
                   userName,
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold, // 폰트 굵게 적용
+                  ),
                 ),
               ],
             ),
-            SizedBox(height: 10,),
+            const SizedBox(height: 10),
+            // 체크리스트 수정 버튼
             Container(
-              width: double.infinity, // 가로 전체 크기
+              width: double.infinity,
               height: 40,
               child: TextButton(
                 style: TextButton.styleFrom(
@@ -77,15 +92,28 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                   ),
                 ),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChecklistEditScreen(),
-                    ),
-                  );
+                  // 체크리스트가 작성되지 않은 경우 경고 다이얼로그 띄우기
+                  if (dorm == "정보 없음" ||
+                      roomType == "정보 없음" ||
+                      dormDuration == "정보 없음") {
+                    showDialog(
+                      context: context,
+                      builder: (context) => WarningDialog(
+                        message: "체크리스트를 작성하지 않았습니다.",
+                        buttonCount: 1,
+                      ),
+                    );
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChecklistEditScreen(),
+                      ),
+                    );
+                  }
                 },
-                child: Text(
-                  '체크리스트 수정',
+                child: const Text(
+                  '나의 체크리스트',
                   style: TextStyle(
                     color: Colors.white, // 텍스트 색상: 화이트
                     fontSize: 16, // 글자 크기
@@ -95,34 +123,52 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 25),
-
-            // 🟢 프로필 정보 카드 (생활관, 인실, 기숙사 기간)
+            const SizedBox(height: 25),
+            // 기숙사 정보 카드
             Card(
+              color: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
               elevation: 3,
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
                     ListTile(
-                      leading: Icon(Icons.home, color: Colors.blue),
-                      title: Text("생활관"),
-                      subtitle: Text(dorm),
+                      leading: const Icon(Icons.home, color: Colors.blue),
+                      title: const Text(
+                        "생활관",
+                        style: TextStyle(fontWeight: FontWeight.bold), // 굵은 폰트
+                      ),
+                      subtitle: Text(
+                        dorm,
+                        // style: const TextStyle(fontWeight: FontWeight.bold), // 굵은 폰트
+                      ),
                     ),
-                    Divider(),
+                    const Divider(),
                     ListTile(
-                      leading: Icon(Icons.king_bed, color: Colors.green),
-                      title: Text("인실"),
-                      subtitle: Text(roomType),
+                      leading: const Icon(Icons.king_bed, color: Colors.green),
+                      title: const Text(
+                        "인실",
+                        style: TextStyle(fontWeight: FontWeight.bold), // 굵은 폰트
+                      ),
+                      subtitle: Text(
+                        roomType,
+                        // style: const TextStyle(fontWeight: FontWeight.bold), // 굵은 폰트
+                      ),
                     ),
-                    Divider(),
+                    const Divider(),
                     ListTile(
-                      leading: Icon(Icons.schedule, color: Colors.orange),
-                      title: Text("기숙사 기간"),
-                      subtitle: Text(dormDuration),
+                      leading: const Icon(Icons.schedule, color: Colors.orange),
+                      title: const Text(
+                        "기숙사 기간",
+                        style: TextStyle(fontWeight: FontWeight.bold), // 굵은 폰트
+                      ),
+                      subtitle: Text(
+                        dormDuration,
+                        // style: const TextStyle(fontWeight: FontWeight.bold), // 굵은 폰트
+                      ),
                     ),
                   ],
                 ),
@@ -130,6 +176,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
             ),
           ],
         ),
-      ));
+      )),
+    );
   }
 }

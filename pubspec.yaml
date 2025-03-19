@@ -52,6 +52,7 @@ dependencies:
   shared_preferences: ^2.5.2
   cloud_functions: ^5.3.3
   intl: ^0.20.2
+  stream_chat_flutter: ^9.3.0
 
 
 
@@ -74,8 +75,15 @@ dev_dependencies:
 flutter:
   assets:
     - assets/default_profile.png
+  fonts:
+    - family: OAGothic
+      fonts:
+        - asset: fonts/OAGothic-ExtraBold.ttf
+        - asset: fonts/OAGothic-Medium.ttf
 
-  # The following line ensures that the Material Icons font is
+
+
+  # The following line ensures that the Material Icons style is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
@@ -93,8 +101,8 @@ flutter:
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
-  # "family" key with the font family name, and a "fonts" key with a
-  # list giving the asset and other descriptors for the font. For
+  # "family" key with the style family name, and a "fonts" key with a
+  # list giving the asset and other descriptors for the style. For
   # example:
   # fonts:
   #   - family: Schyler

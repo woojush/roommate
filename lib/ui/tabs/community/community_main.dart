@@ -14,7 +14,7 @@ class CommunityTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MainTabAppBar(title: '커뮤니티', actions: [TextButton(onPressed: (){}, child: Text('aa'))],),
+      appBar: MainTabAppBar(title: '커뮤니티',),
       body: ListView(
         children: [
           ListTile(

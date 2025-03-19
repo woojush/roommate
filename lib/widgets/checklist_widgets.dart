@@ -1,16 +1,12 @@
 // lib/widgets/checklist_widgets.dart
 
-import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import 'package:findmate1/service/tabs/matching/checklist/checklist_item.dart';
 import 'package:findmate1/service/tabs/matching/checklist/checklist_provider.dart';
 
-/// (1) CupertinoPickerWidget
-///     - showerDuration, alcoholAmount => 첫번째(0)
-///     - 그 외(예: 학번, 생년) => 마지막에서부터 시작
+/// (1) CupertinoPickerWidget: picker 타입 질문에 사용
 class CupertinoPickerWidget extends StatefulWidget {
   final ChecklistQuestion question;
   final Function(String) onSelected;
@@ -37,21 +33,12 @@ class _CupertinoPickerWidgetState extends State<CupertinoPickerWidget> {
     final provider = Provider.of<ChecklistProvider>(context, listen: false);
     final currentValue = provider.checklistAnswers[widget.question.id];
 
-    if (currentValue != null && currentValue is String && options.contains(currentValue)) {
-      // 이미 저장된 값이 있으면 그 인덱스
+    // 현재 값이 String이고 options 목록에 포함되어 있으면 해당 인덱스로
+    if (currentValue is String && options.contains(currentValue)) {
       selectedIndex = options.indexOf(currentValue);
     } else {
-      // 저장된 값이 없으면 index 결정
-      if (options.isNotEmpty) {
-        if (widget.question.id == "showerDuration" ||
-            widget.question.id == "alcoholAmount") {
-          // 샤워소요시간, 주량 => 첫번째(0)
-          selectedIndex = 0;
-        } else {
-          // 생년, 학번 등 => 마지막 값
-          selectedIndex = options.length - 1;
-        }
-      }
+      // 없으면 맨 마지막 인덱스로 설정
+      selectedIndex = options.isNotEmpty ? options.length - 1 : 0;
     }
   }
 
@@ -66,9 +53,9 @@ class _CupertinoPickerWidgetState extends State<CupertinoPickerWidget> {
       children: [
         Text(
           widget.question.question,
-          style: TextStyle(fontSize:  18, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         GestureDetector(
           onTap: () {
             showCupertinoModalPopup(
@@ -78,7 +65,7 @@ class _CupertinoPickerWidgetState extends State<CupertinoPickerWidget> {
                 color: Colors.white,
                 child: Column(
                   children: [
-                    // 확인/취소
+                    // 상단의 취소/확인 버튼
                     Container(
                       height: 50,
                       color: Colors.grey.shade200,
@@ -86,11 +73,11 @@ class _CupertinoPickerWidgetState extends State<CupertinoPickerWidget> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           CupertinoButton(
-                            child: Text("취소"),
+                            child: const Text("취소"),
                             onPressed: () => Navigator.pop(context),
                           ),
                           CupertinoButton(
-                            child: Text("확인"),
+                            child: const Text("확인"),
                             onPressed: () {
                               if (selectedIndex < options.length) {
                                 widget.onSelected(options[selectedIndex]);
@@ -101,19 +88,16 @@ class _CupertinoPickerWidgetState extends State<CupertinoPickerWidget> {
                         ],
                       ),
                     ),
+                    // 실제 Picker 영역
                     Expanded(
                       child: CupertinoPicker(
-                        scrollController: FixedExtentScrollController(
-                          initialItem: selectedIndex,
-                        ),
+                        scrollController: FixedExtentScrollController(initialItem: selectedIndex),
                         backgroundColor: Colors.white,
                         itemExtent: 30,
                         onSelectedItemChanged: (idx) {
                           setState(() => selectedIndex = idx);
                         },
-                        children: options
-                            .map((e) => Center(child: Text(e)))
-                            .toList(),
+                        children: options.map((e) => Center(child: Text(e))).toList(),
                       ),
                     ),
                   ],
@@ -122,7 +106,7 @@ class _CupertinoPickerWidgetState extends State<CupertinoPickerWidget> {
             );
           },
           child: Container(
-            padding: EdgeInsets.all(12),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey),
               borderRadius: BorderRadius.circular(8),
@@ -135,15 +119,17 @@ class _CupertinoPickerWidgetState extends State<CupertinoPickerWidget> {
   }
 }
 
-/// (2) ButtonSelectionWidget: 성별, 생활관, 인실, 잠버릇(복수)
+/// (2) ButtonSelectionWidget: button 타입 질문 (단일/다중 선택 지원)
 class ButtonSelectionWidget extends StatefulWidget {
   final ChecklistQuestion question;
   final Function(dynamic) onSelected;
+  final dynamic selectedValue;
 
   const ButtonSelectionWidget({
     Key? key,
     required this.question,
     required this.onSelected,
+    this.selectedValue,
   }) : super(key: key);
 
   @override
@@ -151,139 +137,79 @@ class ButtonSelectionWidget extends StatefulWidget {
 }
 
 class _ButtonSelectionWidgetState extends State<ButtonSelectionWidget> {
-  // multiSelect => List<String>, single => String
-  dynamic selectedValue;
-
-  // ★ 신입생이 "제3생활관" 외 선택시 표시할 오류문구
-  String? dormErrorMessage;
+  late dynamic selectedValueLocal;
 
   @override
   void initState() {
     super.initState();
-    final provider = Provider.of<ChecklistProvider>(context, listen: false);
-    final currentVal = provider.checklistAnswers[widget.question.id];
 
+    // Firestore에서 불러온 값(= widget.selectedValue)
+    selectedValueLocal = widget.selectedValue;
+
+    // multiSelect == true 이면 List<String> 형태여야 함
     if (widget.question.multiSelect) {
-      if (currentVal is List<String>) {
-        selectedValue = List<String>.from(currentVal);
+      // Firestore에서는 List<dynamic>으로 들어올 수 있으므로, 명시적 변환
+      if (selectedValueLocal is List) {
+        // [유동적, 아침] 처럼 이미 배열이라면 List<String>으로 캐스팅
+        selectedValueLocal = List<String>.from(selectedValueLocal);
+      } else if (selectedValueLocal is String) {
+        // 혹시 "유동적, 아침" 같은 문자열로 저장된 경우
+        selectedValueLocal = (selectedValueLocal as String)
+            .split(',')
+            .map((e) => e.trim())
+            .toList();
       } else {
-        selectedValue = <String>[];
+        // 그 외 (null 등)인 경우 빈 배열로
+        selectedValueLocal = <String>[];
       }
     } else {
-      selectedValue = currentVal as String?;
+      // 단일 선택
+      selectedValueLocal = selectedValueLocal as String?;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<ChecklistProvider>(context);
-    final List<String> options =
-        (widget.question.options as List?)?.cast<String>() ?? [];
-
-    // ★ 학번 => 신입생인지 판단
-    final yearOptions = generateStudentYearOptions();
-    final lastYear = yearOptions.isNotEmpty ? yearOptions.last : null;
-    final selectedYear = provider.checklistAnswers["studentYear"];
+    final List<String> options = (widget.question.options as List?)?.cast<String>() ?? [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 질문 제목
-        Row(
-          children: [
-            Text(
-              widget.question.question,
-              style: TextStyle(fontSize:  18, fontWeight: FontWeight.bold),
-            ),
-            // 신입생이 dormError => 메시지 표시
-            if (widget.question.id == "dorm" && dormErrorMessage != null)
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0),
-                child: Text(
-                  dormErrorMessage!,
-                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-                ),
-              )
-          ],
+        Text(
+          widget.question.question,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        SizedBox(height: 8),
-
-        // 버튼들
+        const SizedBox(height: 8),
         Wrap(
           spacing: 8,
           children: options.map((option) {
             bool isSelected = false;
             if (widget.question.multiSelect) {
-              isSelected = (selectedValue as List<String>).contains(option);
+              isSelected = (selectedValueLocal as List<String>).contains(option);
             } else {
-              isSelected = (selectedValue == option);
+              isSelected = (selectedValueLocal == option);
             }
-
             return ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: isSelected ? Colors.blue : Colors.grey,
               ),
               onPressed: () {
-                // 만약 dorm 질문이고, 신입생이면 => "제3생활관" 외는 선택 불가
-                if (widget.question.id == "dorm" &&
-                    lastYear != null &&
-                    selectedYear == lastYear &&
-                    option != "제3생활관") {
-                  // 에러 표시 => "신입생은 제3생활관만 이용가능합니다."
-                  setState(() {
-                    dormErrorMessage = "신입생은 제3생활관만 이용 가능합니다.";
-                  });
-                  return; // 실제로는 선택 안 됨
-                }
-
-                // 잠버릇 '없음' 로직
-                if (widget.question.multiSelect && widget.question.id == "sleepHabit") {
-                  setState(() {
-                    if (option == "없음") {
-                      // '없음' 누르면 다른거 해제
-                      selectedValue.clear();
-                      selectedValue.add("없음");
-                    } else {
-                      // 다른거 누르면 '없음' 제거
-                      if ((selectedValue as List<String>).contains("없음")) {
-                        (selectedValue as List<String>).remove("없음");
-                      }
-                      // toggle
-                      if ((selectedValue as List<String>).contains(option)) {
-                        (selectedValue as List<String>).remove(option);
-                      } else {
-                        (selectedValue as List<String>).add(option);
-                      }
-                    }
-                  });
-                  widget.onSelected(selectedValue);
-                  return;
-                }
-
-                // 일반 multiSelect
-                if (widget.question.multiSelect) {
-                  setState(() {
-                    if ((selectedValue as List<String>).contains(option)) {
-                      (selectedValue as List<String>).remove(option);
-                    } else {
-                      (selectedValue as List<String>).add(option);
-                    }
-                  });
-                  widget.onSelected(selectedValue);
-                  return;
-                }
-
-                // 단일
                 setState(() {
-                  selectedValue = option;
-                  // dorm => 에러문구 해제
-                  if (widget.question.id == "dorm") {
-                    dormErrorMessage = null;
+                  if (widget.question.multiSelect) {
+                    // 토글 방식
+                    if ((selectedValueLocal as List<String>).contains(option)) {
+                      (selectedValueLocal as List<String>).remove(option);
+                    } else {
+                      (selectedValueLocal as List<String>).add(option);
+                    }
+                  } else {
+                    selectedValueLocal = option;
                   }
                 });
-                widget.onSelected(selectedValue);
+                // 최종 선택된 배열(또는 단일 값)을 Provider로 전달
+                widget.onSelected(selectedValueLocal);
               },
-              child: Text(option, style: TextStyle(color: Colors.white)),
+              child: Text(option, style: const TextStyle(color: Colors.white)),
             );
           }).toList(),
         ),
@@ -292,54 +218,135 @@ class _ButtonSelectionWidgetState extends State<ButtonSelectionWidget> {
   }
 }
 
-/// (3) TimePickerWidget: 기상/취침 시간
-class TimePickerWidget extends StatelessWidget {
-  final ChecklistQuestion question;
-  final Function(String) onSelected;
+/// (3) CupertinoTimePickerWidget: iOS 스타일 시간 선택 위젯 (timeIos 타입)
+class CupertinoTimePickerWidget extends StatefulWidget {
+  final String title;
+  final DateTime initialTime;
+  final Function(DateTime) onTimeSelected;
+  final bool use24hFormat;
 
-  const TimePickerWidget({
+  const CupertinoTimePickerWidget({
     Key? key,
-    required this.question,
-    required this.onSelected,
+    required this.title,
+    required this.initialTime,
+    required this.onTimeSelected,
+    this.use24hFormat = false,
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final provider = Provider.of<ChecklistProvider>(context);
-    final currentVal = provider.checklistAnswers[question.id];
-    final displayText = currentVal is String ? currentVal : "시간 선택";
+  _CupertinoTimePickerWidgetState createState() => _CupertinoTimePickerWidgetState();
+}
 
+class _CupertinoTimePickerWidgetState extends State<CupertinoTimePickerWidget> {
+  late DateTime tempPickedTime;
+
+  @override
+  void initState() {
+    super.initState();
+    tempPickedTime = widget.initialTime;
+  }
+
+  Future<void> _showTimePicker(BuildContext context) async {
+    await showCupertinoModalPopup(
+      context: context,
+      builder: (_) => Container(
+        height: 300,
+        color: Colors.white,
+        child: Column(
+          children: [
+            Container(
+              height: 50,
+              color: Colors.grey.shade200,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  CupertinoButton(
+                    child: const Text("취소"),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  CupertinoButton(
+                    child: const Text("확인"),
+                    onPressed: () {
+                      widget.onTimeSelected(tempPickedTime);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.time,
+                use24hFormat: widget.use24hFormat,
+                initialDateTime: tempPickedTime,
+                onDateTimeChanged: (newDateTime) {
+                  setState(() {
+                    tempPickedTime = newDateTime;
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatTime(DateTime dateTime, bool use24h) {
+    if (use24h) {
+      final hour = dateTime.hour.toString().padLeft(2, '0');
+      final minute = dateTime.minute.toString().padLeft(2, '0');
+      return "$hour:$minute";
+    } else {
+      final hour = dateTime.hour == 0
+          ? 12
+          : (dateTime.hour > 12 ? dateTime.hour - 12 : dateTime.hour);
+      final ampm = dateTime.hour < 12 ? "오전" : "오후";
+      final minute = dateTime.minute.toString().padLeft(2, '0');
+      return "$ampm $hour:$minute";
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final timeString = _formatTime(tempPickedTime, widget.use24hFormat);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(question.question, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        SizedBox(height: 8),
-        ElevatedButton(
-          onPressed: () async {
-            final pickedTime = await showTimePicker(
-              context: context,
-              initialTime: TimeOfDay.now(),
-            );
-            if (pickedTime != null) {
-              onSelected(pickedTime.format(context));
-            }
-          },
-          child: Text(displayText),
+        Text(
+          widget.title,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () => _showTimePicker(context),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(timeString),
+          ),
         ),
       ],
     );
   }
 }
 
-/// (4) TextInputWidget: 단답형
+/// (4) TextInputWidget: 단답형 입력 위젯 (hintText 및 초기값 지원)
 class TextInputWidget extends StatefulWidget {
   final ChecklistQuestion question;
   final Function(String) onChanged;
+  final String? initialValue;
+  final String? hintText;
 
   const TextInputWidget({
     Key? key,
     required this.question,
     required this.onChanged,
+    this.initialValue,
+    this.hintText,
   }) : super(key: key);
 
   @override
@@ -352,9 +359,7 @@ class _TextInputWidgetState extends State<TextInputWidget> {
   @override
   void initState() {
     super.initState();
-    final provider = Provider.of<ChecklistProvider>(context, listen: false);
-    final currentVal = provider.checklistAnswers[widget.question.id];
-    _controller = TextEditingController(text: currentVal ?? "");
+    _controller = TextEditingController(text: widget.initialValue ?? "");
   }
 
   @override
@@ -363,20 +368,18 @@ class _TextInputWidgetState extends State<TextInputWidget> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          widget.question.question, // 예: "하고 싶은 말"
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          widget.question.question,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         TextField(
           controller: _controller,
-          onChanged: (val) => widget.onChanged(val),
-          // 자동 줄바꿈 + 기본 높이 확대
-          maxLines: 6,   // 원하는 만큼 늘려 높이 확보
-          minLines: 1,   // 최소 1줄
+          onChanged: widget.onChanged,
+          maxLines: 6,
+          minLines: 1,
           decoration: InputDecoration(
-            border: OutlineInputBorder(),
-            // 넓은 힌트 문구 예시
-            hintText: '예) 같이 지낼 때 꼭 지켜줬으면 하는 점, 본인 성격 등 자유롭게 작성하세요.',
+            border: const OutlineInputBorder(),
+            hintText: widget.hintText ?? '여기에 작성해주세요',
           ),
         ),
       ],
@@ -390,15 +393,17 @@ class _TextInputWidgetState extends State<TextInputWidget> {
   }
 }
 
-/// (5) MBTISelectionWidget: 2차원 배열
+/// (5) MBTISelectionWidget: MBTI 선택 위젯 (2차원 배열)
 class MBTISelectionWidget extends StatefulWidget {
   final ChecklistQuestion question;
   final Function(String) onSelected;
+  final String? selectedValue;
 
   const MBTISelectionWidget({
     Key? key,
     required this.question,
     required this.onSelected,
+    this.selectedValue,
   }) : super(key: key);
 
   @override
@@ -428,10 +433,12 @@ class _MBTISelectionWidgetState extends State<MBTISelectionWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.question.question,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        SizedBox(height: 8),
-        // 각 그룹 I/E, S/N, F/T, P/J
+        Text(
+          widget.question.question,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        // mbtiGroups: [[I, E], [S, N], [F, T], [P, J]]
         ...mbtiGroups.asMap().entries.map((entry) {
           final groupIndex = entry.key;
           final groupOptions = entry.value;
@@ -457,13 +464,12 @@ class _MBTISelectionWidgetState extends State<MBTISelectionWidget> {
                   }
                   chars[groupIndex] = option;
                   final newVal = chars.join();
-
                   setState(() {
                     selectedMBTI = newVal;
                   });
                   widget.onSelected(newVal);
                 },
-                child: Text(option, style: TextStyle(color: Colors.white)),
+                child: Text(option, style: const TextStyle(color: Colors.white)),
               );
             }).toList(),
           );

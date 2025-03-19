@@ -10,6 +10,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'post_card.dart';
 import 'new_post_screen.dart';
 import 'package:findmate1/service/tabs/community/post.dart';
+import 'package:findmate1/widgets/sub_screen_appbar.dart';
 
 class BoardScreen extends StatelessWidget {
   final String boardType;
@@ -18,8 +19,8 @@ class BoardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(boardType == 'free' ? "자유게시판" : "건의사항 게시판"),
+      appBar: SubScreenAppBar(
+        title: boardType == 'free' ? "자유게시판" : "건의사항 게시판",
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance

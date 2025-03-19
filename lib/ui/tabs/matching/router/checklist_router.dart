@@ -16,12 +16,12 @@ class ChecklistRouter extends StatefulWidget {
 class _ChecklistRouterState extends State<ChecklistRouter> {
   bool _isChecklistComplete = false;
   bool _isLoading = true;
-  RoomModel? _userRoom; // ✅ 사용자의 방 정보 저장
+  RoomModel? _userRoom; // 사용자의 방 정보 저장
 
   @override
   void initState() {
     super.initState();
-    // 🚀 `addPostFrameCallback`을 사용하여 UI 빌드가 끝난 후 비동기 작업 실행
+    // UI 빌드 완료 후 _checkChecklistStatus 실행
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkChecklistStatus();
     });
@@ -32,6 +32,7 @@ class _ChecklistRouterState extends State<ChecklistRouter> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       print("사용자가 로그인되어 있지 않습니다.");
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
@@ -40,7 +41,7 @@ class _ChecklistRouterState extends State<ChecklistRouter> {
 
     print("현재 로그인한 사용자 UID: ${user.uid}");
 
-    // ✅ 체크리스트 문서 가져오기
+    // 체크리스트 문서 가져오기
     final checklistDoc = await FirebaseFirestore.instance
         .collection('checklists')
         .doc(user.uid)
@@ -49,7 +50,7 @@ class _ChecklistRouterState extends State<ChecklistRouter> {
     bool checklistExists = checklistDoc.exists;
     RoomModel? userRoom;
 
-    // ✅ Firestore에서 사용자의 방 정보도 가져오기 (해당 유저가 있는 방 조회)
+    // 사용자의 방 정보 가져오기 (해당 유저가 포함된 방 조회)
     final roomQuery = await FirebaseFirestore.instance
         .collection('rooms')
         .where('members', arrayContains: user.uid)
@@ -57,10 +58,12 @@ class _ChecklistRouterState extends State<ChecklistRouter> {
         .get();
 
     if (roomQuery.docs.isNotEmpty) {
-      userRoom = RoomModel.fromMap(roomQuery.docs.first.data(), roomQuery.docs.first.id);
+      userRoom = RoomModel.fromMap(
+          roomQuery.docs.first.data(), roomQuery.docs.first.id);
     }
 
-    // 🚀 빌드가 끝난 후 UI 업데이트
+    // 위젯이 아직 마운트되어 있는지 확인
+    if (!mounted) return;
     setState(() {
       _isChecklistComplete = checklistExists;
       _userRoom = userRoom;
@@ -73,10 +76,12 @@ class _ChecklistRouterState extends State<ChecklistRouter> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
-    // 체크리스트 미작성 → 체크리스트 작성 화면
+    // 체크리스트 미작성 → 체크리스트 작성 화면 표시
     if (!_isChecklistComplete) {
       return Scaffold(
         appBar: MainTabAppBar(title: '룸메이트 매칭'),
@@ -84,36 +89,47 @@ class _ChecklistRouterState extends State<ChecklistRouter> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('체크리스트가 작성되지 않았습니다.'),
+              Text('체크리스트가 작성되지 않았습니다.', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
               SizedBox(height: 10),
-              GestureDetector(
-                onTap: () async {
+              ElevatedButton(
+                onPressed: () async {
                   // ChecklistScreen에서 완료 후 true 반환
                   final result = await Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ChecklistScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => ChecklistScreen(),
+                    ),
                   );
                   if (result == true) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      _checkChecklistStatus();
-                    });
+                    if (mounted) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        _checkChecklistStatus();
+                      });
+                    }
                   }
                 },
-                child: Text(
-                  '체크리스트 작성',
-                  style: TextStyle(
-                      color: Colors.blue,
-                      decoration: TextDecoration.underline
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent, // 배경색
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-              ),
-            ],
-          ),
+                child: const Text(
+                  '체크리스트 작성',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              )],
+          )
         ),
       );
     }
 
-    // 체크리스트 작성 완료 → 방 목록 화면 (room이 있으면 전달, 없으면 기본값 전달)
+    // 체크리스트 작성 완료 → 방 목록 화면 (방 정보가 없으면 기본값 전달)
     return RoomListScreen(
       room: _userRoom ??
           RoomModel(

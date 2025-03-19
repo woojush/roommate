@@ -1,46 +1,104 @@
 import 'package:flutter/material.dart';
-import 'package:findmate1/theme.dart'; // ✅ 앱 테마 색상 적용
 
 class MainTabAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String title; // ✅ 제목 (좌측 상단)
-  final List<Widget>? actions; // ✅ 우측 상단 버튼 (옵션)
+  final String title;           // 첫 번째 탭(혹은 기본 제목)
+  final String? subTitle;       // 두 번째 탭 (null이면 탭이 하나만 표시)
+  final int selectedTabIndex;   // 선택된 탭 (0 또는 1)
+  final Function(int)? onTabChanged; // 탭 선택 시 호출되는 콜백
+  final List<Widget>? actions;  // 우측 상단 버튼 (옵션)
 
   const MainTabAppBar({
-    super.key,
+    Key? key,
     required this.title,
+    this.subTitle,
+    this.selectedTabIndex = 0,
+    this.onTabChanged,
     this.actions,
-  });
+  }) : super(key: key);
+
+  @override
+  Size get preferredSize => const Size.fromHeight(80);
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 15, 0, 15),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween, // ✅ 좌우 배치
-          children: [
-            // ✅ 제목 (좌측 정렬)
-            Text(
-              title,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
+    final bool hasTwoTabs = (subTitle != null && subTitle!.isNotEmpty);
 
-            // ✅ 우측 버튼 영역 (설정 버튼 등)
-            Row(
-              children: actions != null
-                  ? actions!.map((action) => Transform.translate(
-                offset: Offset(0, -5), // Y축으로 5픽셀 위로 이동
-                child: action,
-              )).toList()
-                  : [],
-            ),
-
-          ],
+    return SizedBox(
+      height: preferredSize.height,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // 좌측: 탭 텍스트 (버튼 역할)
+              if (!hasTwoTabs)
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 21,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                )
+              else
+                Row(
+                  children: [
+                    // 첫 번째 탭
+                    GestureDetector(
+                      onTap: () {
+                        if (onTabChanged != null) {
+                          onTabChanged!(0);
+                        }
+                      },
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 21,
+                          fontWeight: FontWeight.bold,
+                          color: selectedTabIndex == 0
+                              ? Colors.black  // 선택됨
+                              : Colors.grey.shade400, // 미선택
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    // 두 번째 탭
+                    GestureDetector(
+                      onTap: () {
+                        if (onTabChanged != null) {
+                          onTabChanged!(1);
+                        }
+                      },
+                      child: Text(
+                        subTitle!,
+                        style: TextStyle(
+                          fontSize: 21,
+                          fontWeight: FontWeight.bold,
+                          color: selectedTabIndex == 1
+                              ? Colors.black
+                              : Colors.grey.shade400,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              // 우측: 액션 버튼 영역 (옵션)
+              if (actions != null)
+                Row(
+                  children: actions!
+                      .map(
+                        (action) => Transform.translate(
+                      offset: const Offset(0, -5),
+                      child: action,
+                    ),
+                  )
+                      .toList(),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
-
-  @override
-  Size get preferredSize => const Size.fromHeight(60); // ✅ 높이 조정 가능
 }

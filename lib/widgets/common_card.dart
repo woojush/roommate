@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// ✅ 공통 카드 위젯 (Container 기반, 모든 방향에 그림자 적용)
+/// ✅ 공통 카드 위젯 (Container 기반, 모든 방향에 그림자 및 테두리 적용)
 class CommonCard extends StatelessWidget {
   final Widget child;
   final VoidCallback? onTap;
@@ -8,6 +8,7 @@ class CommonCard extends StatelessWidget {
   final Color color;
   final double cardRadius;
   final List<BoxShadow>? cardShadow;
+  final Border? border; // 테두리 속성 추가
 
   const CommonCard({
     Key? key,
@@ -17,6 +18,7 @@ class CommonCard extends StatelessWidget {
     this.color = Colors.white,
     this.cardRadius = 12,
     this.cardShadow,
+    this.border,
   }) : super(key: key);
 
   @override
@@ -28,14 +30,15 @@ class CommonCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(cardRadius),
+          // 기본 테두리: 외곽에 얇은 회색 테두리
+          border: border ?? Border.all(color: Colors.grey.shade300, width: 1.0),
           boxShadow: cardShadow ??
               [
-                // 모든 방향에 균일한 그림자 적용
                 BoxShadow(
                   color: Colors.grey.withOpacity(0.2),
-                  spreadRadius: 3,
-                  blurRadius: 5,
-                  offset: const Offset(0, 0),
+                  spreadRadius: 0.5,
+                  blurRadius: 0.5,
+                  offset: const Offset(0, 1),
                 ),
               ],
         ),
@@ -76,7 +79,10 @@ class CommonButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
         ),
       ),
-      child: Text(text, style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold)),
+      child: Text(
+        text,
+        style: TextStyle(fontSize: fontSize, fontWeight: FontWeight.bold),
+      ),
     );
   }
 }
@@ -96,6 +102,10 @@ class CommonDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Divider(color: color, thickness: thickness, height: height);
+    return Divider(
+      color: color,
+      thickness: thickness,
+      height: height,
+    );
   }
 }

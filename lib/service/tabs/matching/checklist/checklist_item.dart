@@ -16,13 +16,13 @@
 ///   7: 기타 메세지 (userMessage, 자유 기재)
 /// ---------------------------------------------------------------------------
 
-/// ChecklistQuestion 모델
 class ChecklistQuestion {
   final String id;
   final String question;
-  final String type;       // "picker", "button", "time", "input", "mbti" 등
+  final String type;       // "picker", "button", "timeIos", "input", "mbti" 등
   final dynamic options;   // picker/button: List<String>, mbti: List<List<String>>
   final bool multiSelect;  // 복수 선택 여부
+  final String? example;
 
   ChecklistQuestion({
     required this.id,
@@ -30,6 +30,7 @@ class ChecklistQuestion {
     required this.type,
     this.options,
     this.multiSelect = false,
+    this.example,
   });
 }
 
@@ -109,15 +110,16 @@ final List<List<ChecklistQuestion>> checklistPages = [
   ],
   // 페이지 2: 기상시간, 취침시간, 알람, 잠버릇(복수)
   [
+    // type을 "timeIos"로 정의
     ChecklistQuestion(
       id: "wakeUpTime",
-      question: "기상시간",
-      type: "time",
+      question: "기상시간 (대략)",
+      type: "timeIos",
     ),
     ChecklistQuestion(
       id: "sleepTime",
-      question: "취침시간",
-      type: "time",
+      question: "취침시간 (대략)",
+      type: "timeIos",
     ),
     ChecklistQuestion(
       id: "alarm",
@@ -146,7 +148,6 @@ final List<List<ChecklistQuestion>> checklistPages = [
       id: "showerDuration",
       question: "샤워소요시간",
       type: "picker",
-      // ex) 5분,10분,...40분 이상
       options: <String>["5분", "10분", "15분", "20분", "25분", "30분", "35분", "40분 이상"],
     ),
     ChecklistQuestion(
@@ -162,7 +163,7 @@ final List<List<ChecklistQuestion>> checklistPages = [
       options: <String>["극혐", "못잡음", "중간", "잡음", "귀여움"],
     ),
   ],
-  // 페이지 4: 흡연 여부, 음주 빈도, 주량, 술주사(직접입력)
+  // 페이지 4: 흡연 여부, 음주 빈도, 주량, 술주사(직접 입력)
   [
     ChecklistQuestion(
       id: "smoking",
@@ -186,6 +187,7 @@ final List<List<ChecklistQuestion>> checklistPages = [
       id: "drinkingExperience",
       question: "술주사",
       type: "input",
+      example: "예) 취침",
     ),
   ],
   // 페이지 5: 친구초대, 운동, 공부(복수), 취미(직접입력)
@@ -213,6 +215,7 @@ final List<List<ChecklistQuestion>> checklistPages = [
       id: "hobby",
       question: "취미",
       type: "input",
+      example: "예) 독서, 영화 감상",
     ),
   ],
   // 페이지 6: 야식, 실내 취식, 본가 가는 주기
@@ -236,13 +239,13 @@ final List<List<ChecklistQuestion>> checklistPages = [
       options: <String>["방학", "매달", "격주", "매주"],
     ),
   ],
-  // 페이지 7: 마지막 페이지 -> 추가 메세지
+  // 페이지 7: 마지막 페이지 -> 추가 메세지 (자유 기재)
   [
     ChecklistQuestion(
       id: "userMessage",
       question: "추가 메세지 (하고 싶은 말)",
       type: "input",
-      // options: null
+      example: "예) 팀원들에게 하고 싶은 말",
     ),
   ],
 ];

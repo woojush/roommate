@@ -11,6 +11,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:findmate1/service/tabs/community/post_service.dart';
+import 'package:findmate1/widgets/sub_screen_appbar.dart';
 
 class NewPostScreen extends StatefulWidget {
   final String boardType;
@@ -89,9 +90,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("게시글 작성"),
-      ),
+      appBar: SubScreenAppBar(title: "게시글 작성"),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: _isUploading

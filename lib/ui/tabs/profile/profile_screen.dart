@@ -33,6 +33,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           .collection("users")
           .doc(uid)
           .get();
+      // 위젯이 아직 마운트되어 있는지 확인
+      if (!mounted) return;
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
         setState(() {
@@ -42,6 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -77,16 +80,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // 프로필 이미지
                   CircleAvatar(
                     radius: 40,
                     backgroundImage: profileImage.isNotEmpty
                         ? NetworkImage(profileImage)
-                        : const AssetImage("assets/default_profile.png")
-                    as ImageProvider,
+                        : const AssetImage("assets/default_profile.png") as ImageProvider,
                   ),
                   const SizedBox(width: 16),
-                  // 사용자 정보
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -106,12 +106,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                   ),
-                  // 화살표 아이콘 (더 보기)
-                  const Icon(Icons.arrow_forward_ios,
-                      size: 16, color: Colors.grey),
+                  const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
                 ],
               ),
             ),
+
             // 추가 콘텐츠가 있다면 여기에 배치합니다.
           ],
         ),

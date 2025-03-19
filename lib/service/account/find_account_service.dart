@@ -22,19 +22,6 @@ class AccountService {
     await _auth.signInWithEmailAndPassword(email: email, password: password);
   }
 
-  /// 계정 삭제: 현재 로그인된 계정의 Firestore 데이터 삭제 후, Firebase Auth에서 계정 삭제
-  static Future<void> deleteAccount() async {
-    User? user = _auth.currentUser;
-    if (user == null) {
-      throw Exception("로그인된 계정이 없습니다.");
-    }
-    // Firestore에서 사용자 데이터 삭제
-    await _firestore.collection('users').doc(user.uid).delete();
-    // Firebase Auth에서 계정 삭제
-    await user.delete();
-  }
-
-
   /// 로그아웃 처리
   static Future<void> logout() async {
     await _auth.signOut();
@@ -93,5 +80,34 @@ class AccountService {
     } catch (e) {
       print("Error updating profile: $e");
     }
+  }
+
+  /// 아이디 찾기: 등록된 이메일로 Firestore에서 사용자 문서를 조회한 후, 아이디 반환
+  static Future<String> findIdByEmail({required String email}) async {
+    final query = await _firestore.collection('users')
+        .where('email', isEqualTo: email)
+        .limit(1)
+        .get();
+
+    if (query.docs.isEmpty) {
+      throw Exception("해당 이메일로 등록된 아이디가 없습니다.");
+    }
+
+    return query.docs.first['id'];
+  }
+
+  /// 비밀번호 재설정: 등록된 아이디로 Firestore에서 이메일을 조회한 후, 비밀번호 재설정 이메일 발송
+  static Future<void> sendPasswordResetEmailById({required String id}) async {
+    final query = await _firestore.collection('users')
+        .where('id', isEqualTo: id)
+        .limit(1)
+        .get();
+
+    if (query.docs.isEmpty) {
+      throw Exception("해당 아이디로 등록된 이메일이 없습니다.");
+    }
+
+    final email = query.docs.first['email'];
+    await _auth.sendPasswordResetEmail(email: email);
   }
 }

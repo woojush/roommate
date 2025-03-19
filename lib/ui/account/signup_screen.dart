@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:findmate1/widgets/textFieldAndButton.dart'; // CustomInputButton 위젯 사용
 import 'package:findmate1/service/account/account_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:findmate1/widgets/main_tab_appbar.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -137,7 +138,7 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("회원가입")),
+      appBar: MainTabAppBar(title: "회원가입"),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),

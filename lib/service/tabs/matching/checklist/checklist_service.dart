@@ -1,3 +1,5 @@
+// package:findmate1/service/tabs/matching/checklist/checklist_service.dart
+
 /// ---------------------------------------------------------------------------
 /// Firestore와 데이터베이스 연동 (데이터 저장 및 불러오기)
 /// UI에서는 ChecklistService의 saveChecklist() 메서드를 호출하여 데이터 저장 작업을 수행합니다.
